@@ -1,0 +1,190 @@
+%{
+#include "../symbol_table/header.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Funções e variáveis globais do Flex
+extern int yylineno;
+extern char *yytext;
+extern FILE *yyin;
+
+// Declaração da função do analisador léxico
+int yylex();
+
+// Declaração da função de tratamento de erros
+void yyerror(const char *s);
+
+%}
+
+%token TPROGRAM TCAR TINT TRETURN TREAD TWRITE TNEWLINE TIF TTHEN TELSE TWHILE TEXECUTE TAND
+%token ID_TOKEN INT_CONST TSTRING_LITERAL
+%token TPLUS TMINUS TTIMES TDIVIDE TASSIGN TEQ TNEQ TLT TLEQ TGT TGEQ TSEMICOLON TLPAREN TRPAREN TLBRACE TRBRACE TLBRACKET TRBRACKET TCOMMA
+%token TOR
+%token TCAR_CONST
+%token TNEG
+
+
+%right TASSIGN
+%left TPLUS TMINUS
+%left TTIMES TDIVIDE
+%right TEQ TNEQ
+%right TLT TLEQ TGT TGEQ
+%left TOR
+%left TAND
+
+%nonassoc TTHEN
+%nonassoc TELSE
+
+
+%start Programa
+
+%%
+
+/* Regras de Gramática (Goianinha) */
+
+Programa: DeclFuncVar DeclProg
+;
+
+DeclFuncVar: Tipo ID_TOKEN DeclVar TSEMICOLON DeclFuncVar
+| Tipo ID_TOKEN DeclFunc DeclFuncVar
+| /* epsilon */
+;
+
+DeclProg: TPROGRAM Bloco
+;
+
+DeclVar: /* epsilon */
+       | TCOMMA ID_TOKEN DeclVar ;
+
+DeclFunc: TLPAREN ListaParametros TRPAREN Bloco
+;
+
+ListaParametros: Tipo ID_TOKEN ListaParametrosCont
+| /* epsilon */
+;
+
+ListaParametrosCont: TCOMMA Tipo ID_TOKEN ListaParametrosCont
+| /* epsilon */
+;
+
+Bloco: TLBRACE ListaDeclVar ListaComando TRBRACE
+| TLBRACE ListaDeclVar TRBRACE
+;
+
+ListaDeclVar: Tipo ID_TOKEN DeclVar TSEMICOLON ListaDeclVar
+| /* epsilon */
+;
+
+ListaComando: Comando ListaComando
+| /* epsilon */
+;
+
+Comando: TSEMICOLON
+       | Expr TSEMICOLON
+       | TRETURN Expr TSEMICOLON
+       | TREAD LValueExpr TSEMICOLON
+       | TWRITE Expr TSEMICOLON
+       | TWRITE TSTRING_LITERAL TSEMICOLON
+       | TNEWLINE TSEMICOLON
+       | TIF TLPAREN Expr TRPAREN TTHEN Comando TELSE Comando
+       | TIF TLPAREN Expr TRPAREN TTHEN Comando
+       | TWHILE TLPAREN Expr TRPAREN TEXECUTE Comando
+       | Bloco
+       | LValueExpr TASSIGN Expr TSEMICOLON
+;
+
+Expr: OrExpr
+;
+
+OrExpr: OrExpr TOR AndExpr
+| AndExpr
+;
+
+AndExpr: AndExpr TAND EqExpr
+| EqExpr
+;
+
+EqExpr: EqExpr TEQ DesigExpr
+| EqExpr TNEQ DesigExpr
+| DesigExpr
+;
+
+DesigExpr: DesigExpr TLT AddExpr
+| DesigExpr TGT AddExpr
+| DesigExpr TLEQ AddExpr
+| DesigExpr TGEQ AddExpr
+| AddExpr
+;
+
+AddExpr: AddExpr TPLUS MulExpr
+| AddExpr TMINUS MulExpr
+| MulExpr
+;
+
+MulExpr: MulExpr TTIMES UnExpr
+| MulExpr TDIVIDE UnExpr
+| UnExpr
+;
+
+
+UnExpr: TMINUS PrimExpr
+| TNEG PrimExpr
+| PrimExpr
+;
+
+LValueExpr: ID_TOKEN
+;
+
+PrimExpr: 
+      INT_CONST
+    | TCAR_CONST
+    | TSTRING_LITERAL 
+    | TLPAREN Expr TRPAREN
+    | ID_TOKEN TLPAREN ListExpr TRPAREN
+    | ID_TOKEN TLPAREN TRPAREN
+    | ID_TOKEN  
+;
+
+
+ListExpr: Expr ListExprCont
+| /* epsilon */
+;
+
+ListExprCont: TCOMMA Expr ListExprCont
+| /* epsilon */
+;
+
+Tipo: TCAR
+| TINT
+;
+
+%%
+
+/* Código C do Usuário */
+
+// Função de tratamento de erros
+void yyerror(const char *s) {
+    fprintf(stderr, "ERRO: Erro sintático na linha %d, proximo a '%s'\n", yylineno, yytext);
+}
+
+// Função principal para iniciar o analisador
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Uso correto: %s <nome_do_arquivo>\n", argv[0]);
+        return 1;
+    }
+    
+    FILE *f = fopen(argv[1], "r");
+    if (!f) {
+        fprintf(stderr, "Não foi possível abrir o arquivo: %s\n", argv[1]);
+        return 1;
+    }
+    
+    yyin = f;
+    yyparse();
+    fclose(yyin);
+
+    printf("Analise sintatica concluida com sucesso!\n");
+    return 0;
+}

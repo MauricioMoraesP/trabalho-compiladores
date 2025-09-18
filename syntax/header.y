@@ -4,15 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Funções e variáveis globais do Flex
+// Flex global functions and variables
 extern int yylineno;
 extern char *yytext;
 extern FILE *yyin;
 
-// Declaração da função do analisador léxico
+// Lexical analyzer function declaration
 int yylex();
 
-// Declaração da função de tratamento de erros
+// Error handling function declaration
 void yyerror(const char *s);
 
 %}
@@ -41,7 +41,7 @@ void yyerror(const char *s);
 
 %%
 
-/* Regras de Gramática (Goianinha) */
+/* Grammar rules (Goianinha) */
 
 Programa: DeclFuncVar DeclProg
 ;
@@ -163,12 +163,12 @@ Tipo: TCAR
 
 /* Código C do Usuário */
 
-// Função de tratamento de erros
+// Error handling function
 void yyerror(const char *s) {
     fprintf(stderr, "ERRO: Erro sintático na linha %d, proximo a '%s'\n", yylineno, yytext);
 }
 
-// Função principal para iniciar o analisador
+// Main function to start the analyzer
 int main(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "Uso correto: %s <nome_do_arquivo>\n", argv[0]);

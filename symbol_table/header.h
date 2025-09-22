@@ -44,7 +44,7 @@ typedef struct FunData
     ParameterNode *params_list;
 } FunData;
 
-// A union para lidar com dados específicos de cada tipo de entrada
+// A union to handle data specific to each input type
 typedef union EntryData
 {
     FunData fun_data;

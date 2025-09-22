@@ -58,12 +58,12 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
 
 {ID} {
     yylval.str = strdup(yytext);
-    return ID_TOKEN;
+    return TID_TOKEN;
 }
 
 {DIGIT}+ {
     yylval.ival = atoi(yytext);
-    return INT_CONST;
+    return TINT_CONST;
 }
 
 \'([^\'\\\n]|\\.)\' {

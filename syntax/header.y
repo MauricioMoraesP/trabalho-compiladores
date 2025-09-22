@@ -15,7 +15,7 @@ int yylex();
 // Error handling function declaration
 void yyerror(const char *s);
 
-int erroEncontrado = 0; // Flag para indicar erro
+int error = 0; // indicator error
 %}
 
 %union {
@@ -24,8 +24,8 @@ int erroEncontrado = 0; // Flag para indicar erro
     char *str;
 }
 
-%token <str> ID_TOKEN TSTRING_LITERAL
-%token <ival> INT_CONST
+%token <str> TID_TOKEN TSTRING_LITERAL
+%token <ival> TINT_CONST
 %token <cval> TCHAR_CONST
 
 %token TPROGRAM TCAR TINT TRETURN TREAD TWRITE TNEWLINE TIF TTHEN TELSE TWHILE TEXECUTE TAND
@@ -51,8 +51,8 @@ int erroEncontrado = 0; // Flag para indicar erro
 Programa: DeclFuncVar DeclProg
 ;
 
-DeclFuncVar: Tipo ID_TOKEN DeclVar TSEMICOLON DeclFuncVar
-           | Tipo ID_TOKEN DeclFunc DeclFuncVar
+DeclFuncVar: Tipo TID_TOKEN DeclVar TSEMICOLON DeclFuncVar
+           | Tipo TID_TOKEN DeclFunc DeclFuncVar
            | /* epsilon */
 ;
 
@@ -60,17 +60,17 @@ DeclProg: TPROGRAM Bloco
 ;
 
 DeclVar: /* epsilon */
-       | TCOMMA ID_TOKEN DeclVar
+       | TCOMMA TID_TOKEN DeclVar
 ;
 
 DeclFunc: TLPAREN ListaParametros TRPAREN Bloco
 ;
 
-ListaParametros: Tipo ID_TOKEN ListaParametrosCont
+ListaParametros: Tipo TID_TOKEN ListaParametrosCont
                | /* epsilon */
 ;
 
-ListaParametrosCont: TCOMMA Tipo ID_TOKEN ListaParametrosCont
+ListaParametrosCont: TCOMMA Tipo TID_TOKEN ListaParametrosCont
                    | /* epsilon */
 ;
 
@@ -78,7 +78,7 @@ Bloco: TLBRACE ListaDeclVar ListaComando TRBRACE
      | TLBRACE ListaDeclVar TRBRACE
 ;
 
-ListaDeclVar: Tipo ID_TOKEN DeclVar TSEMICOLON ListaDeclVar
+ListaDeclVar: Tipo TID_TOKEN DeclVar TSEMICOLON ListaDeclVar
             | /* epsilon */
 ;
 
@@ -138,16 +138,16 @@ UnExpr: TMINUS PrimExpr
       | PrimExpr
 ;
 
-LValueExpr: ID_TOKEN
+LValueExpr: TID_TOKEN
 ;
 
-PrimExpr: INT_CONST
+PrimExpr: TINT_CONST
         | TCHAR_CONST
         | TSTRING_LITERAL
         | TLPAREN Expr TRPAREN
-        | ID_TOKEN TLPAREN ListExpr TRPAREN
-        | ID_TOKEN TLPAREN TRPAREN
-        | ID_TOKEN
+        | TID_TOKEN TLPAREN ListExpr TRPAREN
+        | TID_TOKEN TLPAREN TRPAREN
+        | TID_TOKEN
 ;
 
 ListExpr: Expr ListExprCont
@@ -168,29 +168,37 @@ Tipo: TCAR
 
 // Error handling function
 void yyerror(const char *s) {
-    erroEncontrado = 1;
+    error = 1;
     fprintf(stderr, "ERRO: Erro sintático na linha %d, próximo a '%s'\n", yylineno, yytext);
 }
 
 // Main function to start the analyzer
 int main(int argc, char **argv) {
+
     if (argc < 2) {
-        fprintf(stderr, "Uso correto: %s <nome_do_arquivo>\n", argv[0]);
+        fprintf(stderr, "Erro: Argumento ausente. Por favor, forneça o nome do arquivo-fonte.\n");
+        fprintf(stderr, "Uso: %s <nome_do_arquivo>\n", argv[0]);
         return 1;
     }
     
     FILE *f = fopen(argv[1], "r");
     if (!f) {
-        fprintf(stderr, "Não foi possível abrir o arquivo: %s\n", argv[1]);
+        fprintf(stderr, "Erro: Não foi possível abrir o arquivo '%s'.\n", argv[1]);
+        fprintf(stderr, "Verifique se o arquivo existe e se você tem permissão de leitura.\n");
         return 1;
     }
     
     yyin = f;
+    printf("Análise sintática iniciada para o arquivo '%s'...\n", argv[1]);
+    
     yyparse();
+    
     fclose(yyin);
 
-    if (!erroEncontrado) {
-        printf("Analise sintatica concluida com sucesso!\n");
+    if (!error) {
+        printf("Análise sintática concluída com sucesso para '%s'. Nenhuma irregularidade foi encontrada.\n", argv[1]);
+    } else {
+        printf("Análise concluída, mas foram encontrados erros sintáticos.\n");
     }
 
     return 0;

@@ -33,11 +33,11 @@ int error = 0; // indicator error
 %token TOR
 %token TNEG
 
-%right TASSIGN
+%left TASSIGN
 %left TPLUS TMINUS
 %left TTIMES TDIVIDE
-%right TEQ TNEQ
-%right TLT TLEQ TGT TGEQ
+%left TEQ TNEQ
+%left TLT TLEQ TGT TGEQ
 %left TOR
 %left TAND
 
@@ -100,38 +100,23 @@ Comando: TSEMICOLON
        | LValueExpr TASSIGN Expr TSEMICOLON
 ;
 
-Expr: OrExpr
+Expr: PrimExpr
+    | UnExpr
+    | Expr TPLUS Expr
+    | Expr TMINUS Expr
+    | Expr TTIMES Expr
+    | Expr TDIVIDE Expr
+    | Expr TOR Expr
+    | Expr TAND Expr
+    | Expr TEQ Expr
+    | Expr TNEQ Expr
+    | Expr TLT Expr
+    | Expr TLEQ Expr
+    | Expr TGT Expr
+    | Expr TGEQ Expr
+    | LValueExpr TASSIGN Expr
 ;
-
-OrExpr: OrExpr TOR AndExpr
-      | AndExpr
-;
-
-AndExpr: AndExpr TAND EqExpr
-       | EqExpr
-;
-
-EqExpr: EqExpr TEQ DesigExpr
-      | EqExpr TNEQ DesigExpr
-      | DesigExpr
-;
-
-DesigExpr: DesigExpr TLT AddExpr
-         | DesigExpr TGT AddExpr
-         | DesigExpr TLEQ AddExpr
-         | DesigExpr TGEQ AddExpr
-         | AddExpr
-;
-
-AddExpr: AddExpr TPLUS MulExpr
-       | AddExpr TMINUS MulExpr
-       | MulExpr
-;
-
-MulExpr: MulExpr TTIMES UnExpr
-       | MulExpr TDIVIDE UnExpr
-       | UnExpr
-;
+ 
 
 UnExpr: TMINUS PrimExpr
       | TNEG PrimExpr

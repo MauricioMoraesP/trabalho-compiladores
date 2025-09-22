@@ -8,17 +8,19 @@ Este projeto implementa um compilador didático para a linguagem Goianinha. O tr
 
 /lexicon - Contém os arquivos para o analisador léxico.
 
-/symbol_table - Contém os arquivos para o analisador sintático.
+/symbol_table - Contém os arquivos para a tabela de símbolos.
 
-/symbol_table/utils - Contém os arquivos para a tabela de símbolos.
+/symbol_table/utils - Contém as funções de validação da tabela de símbolos.
 
-/syntax - Contém as funções de validação.
+/syntax -  Contém os arquivos para o analisador sintático.
 
 ### Teste das funções da tabela de síombolos.
 
 No prompt:
 
 ```
+cd symbol_table/
+
 gcc -o test_symbol_table main.c implementation.c utils/*.c
 
 ./test_symbol_table 

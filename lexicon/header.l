@@ -97,7 +97,7 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
     return -1;
 }
 
-[ \t\r]+        {}
+[ \t\r]+        { /* Ignores spaces, tabs, and carriage returns */ }
 
 \n              {}
 

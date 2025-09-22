@@ -69,3 +69,23 @@ bool verifyStackIsNullSucess(SymbolTableStack *stack, const char *message)
     }
     return false;
 }
+
+// Checking if the symbol exists in the scope.
+bool symbolExistsInCurrentScope(SymbolTableStack *stack, char *name)
+{
+    if (stack->top == -1)
+        return false;
+
+    SymbolTable *currentTable = stack->tables[stack->top];
+    if (currentTable == NULL || currentTable->entries == NULL)
+        return false;
+
+    for (int i = 0; i < currentTable->count; i++)
+    {
+        if (strcmp(currentTable->entries[i].lexeme.lex, name) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}

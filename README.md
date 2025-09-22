@@ -14,16 +14,15 @@ Este projeto implementa um compilador didático para a linguagem Goianinha. O tr
 
 /syntax - Contém as funções de validação.
 
-### Teste do  analisador sintático.
+### Teste das funções da tabela de síombolos.
 
 No prompt:
 
 ```
-flex -o lexicon/lex.yy.c lexicon/header.l
+gcc -o test_symbol_table main.c implementation.c utils/*.c
 
-gcc -o test_lex lexicon/main.c lexicon/lex.yy.c -lfl
+./test_symbol_table 
 
-./test_lex <nome_do_arquivo>.goianinha
 ```
 
 

@@ -67,7 +67,13 @@ void removeCurrentScope(SymbolTableStack *stack)
 // Insert a function into the current scope
 void insertFunction(SymbolTableStack *stack, char *name, int num_params, DataType return_type, ParameterNode *params_list)
 {
-    verifyStackUnderflow(stack, "Não há escopo ativo para inserir a função.");
+    verifyStackUnderflow(stack, "Não há escopo ativo para inserir a FUNÇÃO.");
+
+    if (symbolExistsInCurrentScope(stack, name))
+    {
+        printf("Erro: Função '%s' já declarada neste escopo.\n", name);
+        exit(EXIT_FAILURE);
+    }
 
     SymbolTable *currentTable = stack->tables[stack->top];
     ensureSpaceForEntry(currentTable,
@@ -84,9 +90,11 @@ void insertFunction(SymbolTableStack *stack, char *name, int num_params, DataTyp
     newEntry.data.fun_data.num_params = num_params;
     newEntry.data.fun_data.return_type = return_type;
     newEntry.data.fun_data.params_list = params_list;
+
     currentTable->entries[currentTable->count++] = newEntry;
 
-    printf("Função '%s' inserida com sucesso no escopo atual.\n", name);
+    printf("Função '%s' (num_params=%d) INSERIDA com sucesso no escopo atual.\n",
+           name, num_params);
 }
 
 // Insert a variable into the current scope
@@ -94,10 +102,17 @@ void insertVariable(SymbolTableStack *stack, char *name, DataType type)
 {
     verifyStackUnderflow(stack, "Não há escopo ativo para inserir a VARIÁVEL.");
 
+    if (symbolExistsInCurrentScope(stack, name))
+    {
+        printf("Erro: Variável '%s' já declarada neste escopo.\n", name);
+        exit(EXIT_FAILURE);
+    }
+
     SymbolTable *currentTable = stack->tables[stack->top];
     ensureSpaceForEntry(currentTable,
                         "Falha ao alocar memória para a primeira VARIÁVEL.",
                         "Falha ao realocar memória para VARIÁVEIS.");
+
     SymbolEntry newEntry;
     strncpy(newEntry.lexeme.lex, name, NAME_IDENTIFIER - 1);
     newEntry.lexeme.lex[NAME_IDENTIFIER - 1] = '\0';
@@ -105,11 +120,12 @@ void insertVariable(SymbolTableStack *stack, char *name, DataType type)
     newEntry.entry = VAR_ENTRY;
     newEntry.type = type;
     newEntry.data.var_data.scope_level = stack->top;
+    newEntry.data.var_data.declaration_position = currentTable->count + 1;
 
-    currentTable->entries[currentTable->count] = newEntry;
-    currentTable->count++;
+    currentTable->entries[currentTable->count++] = newEntry;
 
-    printf("Variável '%s' INSERIDA com sucesso no escopo atual.\n", name);
+    printf("Variável '%s' (pos=%d) INSERIDA com sucesso no escopo atual.\n",
+           name, newEntry.data.var_data.declaration_position);
 }
 
 // Insert a parameter into the current scope
@@ -117,10 +133,17 @@ void insertParameter(SymbolTableStack *stack, char *name, DataType type)
 {
     verifyStackUnderflow(stack, "Não há escopo ativo para inserir o PARÂMETRO.");
 
+    if (symbolExistsInCurrentScope(stack, name))
+    {
+        printf("Erro: Parâmetro '%s' já declarado neste escopo.\n", name);
+        exit(EXIT_FAILURE);
+    }
+
     SymbolTable *currentTable = stack->tables[stack->top];
     ensureSpaceForEntry(currentTable,
                         "Falha ao alocar memória para o primeiro PARÂMETRO.",
                         "Falha ao realocar memória para PARÂMETROS.");
+
     SymbolEntry newEntry;
     strncpy(newEntry.lexeme.lex, name, NAME_IDENTIFIER - 1);
     newEntry.lexeme.lex[NAME_IDENTIFIER - 1] = '\0';
@@ -128,11 +151,12 @@ void insertParameter(SymbolTableStack *stack, char *name, DataType type)
     newEntry.entry = PARAM_ENTRY;
     newEntry.type = type;
     newEntry.data.var_data.scope_level = stack->top;
+    newEntry.data.var_data.declaration_position = currentTable->count + 1;
 
-    currentTable->entries[currentTable->count] = newEntry;
-    currentTable->count++;
+    currentTable->entries[currentTable->count++] = newEntry;
 
-    printf("Parâmetro '%s' inserido com sucesso no escopo atual.\n", name);
+    printf("Parâmetro '%s' (pos=%d) INSERIDO com sucesso no escopo atual.\n",
+           name, newEntry.data.var_data.declaration_position);
 }
 
 // Destroy the entire symbol table stack and free all memory

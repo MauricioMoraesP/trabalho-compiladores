@@ -15,15 +15,23 @@ int yylex();
 // Error handling function declaration
 void yyerror(const char *s);
 
+int erroEncontrado = 0; // Flag para indicar erro
 %}
 
+%union {
+    int ival;
+    char cval;
+    char *str;
+}
+
+%token <str> ID_TOKEN TSTRING_LITERAL
+%token <ival> INT_CONST
+%token <cval> TCHAR_CONST
+
 %token TPROGRAM TCAR TINT TRETURN TREAD TWRITE TNEWLINE TIF TTHEN TELSE TWHILE TEXECUTE TAND
-%token ID_TOKEN INT_CONST TSTRING_LITERAL
 %token TPLUS TMINUS TTIMES TDIVIDE TASSIGN TEQ TNEQ TLT TLEQ TGT TGEQ TSEMICOLON TLPAREN TRPAREN TLBRACE TRBRACE TLBRACKET TRBRACKET TCOMMA
 %token TOR
-%token TCAR_CONST
 %token TNEG
-
 
 %right TASSIGN
 %left TPLUS TMINUS
@@ -36,48 +44,46 @@ void yyerror(const char *s);
 %nonassoc TTHEN
 %nonassoc TELSE
 
-
 %start Programa
 
 %%
-
-/* Grammar rules (Goianinha) */
 
 Programa: DeclFuncVar DeclProg
 ;
 
 DeclFuncVar: Tipo ID_TOKEN DeclVar TSEMICOLON DeclFuncVar
-| Tipo ID_TOKEN DeclFunc DeclFuncVar
-| /* epsilon */
+           | Tipo ID_TOKEN DeclFunc DeclFuncVar
+           | /* epsilon */
 ;
 
 DeclProg: TPROGRAM Bloco
 ;
 
 DeclVar: /* epsilon */
-       | TCOMMA ID_TOKEN DeclVar ;
+       | TCOMMA ID_TOKEN DeclVar
+;
 
 DeclFunc: TLPAREN ListaParametros TRPAREN Bloco
 ;
 
 ListaParametros: Tipo ID_TOKEN ListaParametrosCont
-| /* epsilon */
+               | /* epsilon */
 ;
 
 ListaParametrosCont: TCOMMA Tipo ID_TOKEN ListaParametrosCont
-| /* epsilon */
+                   | /* epsilon */
 ;
 
 Bloco: TLBRACE ListaDeclVar ListaComando TRBRACE
-| TLBRACE ListaDeclVar TRBRACE
+     | TLBRACE ListaDeclVar TRBRACE
 ;
 
 ListaDeclVar: Tipo ID_TOKEN DeclVar TSEMICOLON ListaDeclVar
-| /* epsilon */
+            | /* epsilon */
 ;
 
 ListaComando: Comando ListaComando
-| /* epsilon */
+            | /* epsilon */
 ;
 
 Comando: TSEMICOLON
@@ -98,65 +104,62 @@ Expr: OrExpr
 ;
 
 OrExpr: OrExpr TOR AndExpr
-| AndExpr
+      | AndExpr
 ;
 
 AndExpr: AndExpr TAND EqExpr
-| EqExpr
+       | EqExpr
 ;
 
 EqExpr: EqExpr TEQ DesigExpr
-| EqExpr TNEQ DesigExpr
-| DesigExpr
+      | EqExpr TNEQ DesigExpr
+      | DesigExpr
 ;
 
 DesigExpr: DesigExpr TLT AddExpr
-| DesigExpr TGT AddExpr
-| DesigExpr TLEQ AddExpr
-| DesigExpr TGEQ AddExpr
-| AddExpr
+         | DesigExpr TGT AddExpr
+         | DesigExpr TLEQ AddExpr
+         | DesigExpr TGEQ AddExpr
+         | AddExpr
 ;
 
 AddExpr: AddExpr TPLUS MulExpr
-| AddExpr TMINUS MulExpr
-| MulExpr
+       | AddExpr TMINUS MulExpr
+       | MulExpr
 ;
 
 MulExpr: MulExpr TTIMES UnExpr
-| MulExpr TDIVIDE UnExpr
-| UnExpr
+       | MulExpr TDIVIDE UnExpr
+       | UnExpr
 ;
 
-
 UnExpr: TMINUS PrimExpr
-| TNEG PrimExpr
-| PrimExpr
+      | TNEG PrimExpr
+      | PrimExpr
 ;
 
 LValueExpr: ID_TOKEN
 ;
 
-PrimExpr: 
-      INT_CONST
-    | TCAR_CONST
-    | TSTRING_LITERAL 
-    | TLPAREN Expr TRPAREN
-    | ID_TOKEN TLPAREN ListExpr TRPAREN
-    | ID_TOKEN TLPAREN TRPAREN
-    | ID_TOKEN  
+PrimExpr: INT_CONST
+        | TCHAR_CONST
+        | TSTRING_LITERAL
+        | TLPAREN Expr TRPAREN
+        | ID_TOKEN TLPAREN ListExpr TRPAREN
+        | ID_TOKEN TLPAREN TRPAREN
+        | ID_TOKEN
 ;
 
-
 ListExpr: Expr ListExprCont
-| /* epsilon */
+        | /* epsilon */
 ;
 
 ListExprCont: TCOMMA Expr ListExprCont
-| /* epsilon */
+            | /* epsilon */
 ;
 
 Tipo: TCAR
-| TINT
+    | TINT
 ;
 
 %%
@@ -165,7 +168,8 @@ Tipo: TCAR
 
 // Error handling function
 void yyerror(const char *s) {
-    fprintf(stderr, "ERRO: Erro sintático na linha %d, proximo a '%s'\n", yylineno, yytext);
+    erroEncontrado = 1;
+    fprintf(stderr, "ERRO: Erro sintático na linha %d, próximo a '%s'\n", yylineno, yytext);
 }
 
 // Main function to start the analyzer
@@ -185,6 +189,9 @@ int main(int argc, char **argv) {
     yyparse();
     fclose(yyin);
 
-    printf("Analise sintatica concluida com sucesso!\n");
+    if (!erroEncontrado) {
+        printf("Analise sintatica concluida com sucesso!\n");
+    }
+
     return 0;
 }

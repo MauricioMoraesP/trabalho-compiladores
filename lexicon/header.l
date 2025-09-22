@@ -4,12 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+// variáveis globais do Flex
 extern char *yytext;
 extern int yylineno;
 int lin_ini_com;
+
+/* yylval vem do Bison/Yacc para passar valores léxicos */
+extern YYSTYPE yylval;
 %}
 
-%option noyywrap yylineno
+/* opções do Flex */
+%option noyywrap yylineno 
 
 DIGIT       [0-9]
 LETTER      [a-zA-Z]
@@ -18,7 +23,6 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
 %x comment
 
 %%
-
 "programa"       { return TPROGRAM; }
 "car"            { return TCAR; }
 "int"            { return TINT; }
@@ -54,35 +58,55 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
 "]"              { return TRBRACKET; }
 ","              { return TCOMMA; }
 
-{ID}             { return ID_TOKEN; }
+{ID} {
+    yylval.str = strdup(yytext);
+    return ID_TOKEN;
+}
 
-{DIGIT}+         { return INT_CONST; }
+{DIGIT}+ {
+    yylval.ival = atoi(yytext);
+    return INT_CONST;
+}
 
-\"([^"\\\n]|\\.)*\"    { return TSTRING_LITERAL; }
-\"([^"\\\n]|\\.)*      { fprintf(stderr, "ERRO: CADEIA DE CARACTERES OCUPA MAIS DE UMA LINHA %d\n", yylineno); return -1; }
+\'([^\'\\\n]|\\.)\' {
+    yylval.cval = yytext[1];
+    return TCHAR_CONST;
+}
 
-"/*"            { BEGIN(comment); lin_ini_com = yylineno; }
+\"([^"\\\n]|\\.)*\" {
+    yylval.str = strdup(yytext);
+    return TSTRING_LITERAL;
+}
+
+\"([^"\\\n]|\\.)* {
+    fprintf(stderr, "ERRO: CADEIA DE CARACTERES OCUPA MAIS DE UMA LINHA %d\n", yylineno);
+    return -1;
+}
+
+"/*" {
+    BEGIN(comment);
+    lin_ini_com = yylineno;
+}
 
 <comment>"*/"    { BEGIN(INITIAL); }
 
 <comment>\n      { yylineno++; }
 
-<comment>.       { /* ignora qualquer caractere dentro de comentário */ }
+<comment>.       {}
 
 <comment><<EOF>> {
-    fprintf(stderr, "ERRO: COMENTARIO NAO TERMINA %d\n", lin_ini_com);
+    fprintf(stderr, "ERRO: COMENTARIO NAO FINALIZADO %d\n", lin_ini_com);
     return -1;
 }
 
-[ \t\r]+        { /* ignora espaços, tabs e retornos de carro */ }
+[ \t\r]+        {}
 
-\n              { /* yylineno é incrementado automaticamente pelo Flex com %option yylineno */ }
+\n              {}
 
-.               {
-                    fprintf(stderr, "ERRO: CARACTERE INVALIDO %d\n", yylineno);
-                    return -1;
-                }
+. {
+    fprintf(stderr, "ERRO: CARACTERE INVALIDO '%s' %d\n", yytext, yylineno);
+    return -1;
+}
 
 %%
 
- 

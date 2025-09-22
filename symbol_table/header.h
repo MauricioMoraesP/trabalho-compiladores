@@ -24,6 +24,7 @@ typedef enum EntryType
 typedef struct
 {
     int scope_level;
+    int declaration_position;
 } VarData;
 
 // Parameter Node in function
@@ -31,6 +32,7 @@ typedef struct ParameterNode
 {
     DataType type;
     char name[NAME_IDENTIFIER];
+    int declaration_position;
     struct ParameterNode *next;
 } ParameterNode;
 

@@ -4,16 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-// variáveis globais do Flex
+// Flex global variables
 extern char *yytext;
 extern int yylineno;
 int lin_ini_com;
 
-/* yylval vem do Bison/Yacc para passar valores léxicos */
 extern YYSTYPE yylval;
 %}
 
-/* opções do Flex */
 %option noyywrap yylineno 
 
 DIGIT       [0-9]

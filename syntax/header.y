@@ -164,7 +164,7 @@ Tipo: TCAR
 
 %%
 
-/* Código C do Usuário */
+/* User C Code */
 
 // Error handling function
 void yyerror(const char *s) {

@@ -9,6 +9,7 @@ extern char *yytext;
 extern int yylineno;
 int lin_ini_com;
 
+
 extern YYSTYPE yylval;
 %}
 
@@ -93,8 +94,8 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
 <comment>.       {}
 
 <comment><<EOF>> {
-    fprintf(stderr, "ERRO: COMENTARIO NAO FINALIZADO %d\n", lin_ini_com);
-    return -1;
+    fprintf(stderr, "ERRO: COMENTARIO NAO FINALIZADO NA LINHA %d\n", lin_ini_com);
+    exit(1);
 }
 
 [ \t\r]+        { /* Ignores spaces, tabs, and carriage returns */ }

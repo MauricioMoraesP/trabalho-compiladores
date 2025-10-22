@@ -78,7 +78,7 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
 }
 
 \"([^"\\\n]|\\.)* {
-    fprintf(stderr, "ERRO: CADEIA DE CARACTERES OCUPA MAIS DE UMA LINHA %d\n", yylineno);
+    fprintf(stderr, "ERRO: CADEIA DE CARACTERES OCUPA MAIS DE UMA LINHA, NA LINHA %d\n", yylineno);
     return -1;
 }
 

@@ -1,8 +1,10 @@
 %{
-#include "../syntax/header.tab.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../syntax/types.h"
+#include "../syntax/ast.h"
+#include "../syntax/header.tab.h"
 
 // Flex global variables
 extern char *yytext;

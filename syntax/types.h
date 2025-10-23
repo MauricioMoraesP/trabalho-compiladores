@@ -1,8 +1,13 @@
+#ifndef TYPES_H
+#define TYPES_H
+
 typedef enum
 {
     NODE_PROGRAMA,
     NODE_BLOCO,
     NODE_LISTA_COMANDOS,
+    NODE_LISTA_EXPRESSOES,
+
     NODE_IF,
     NODE_IF_ELSE,
     NODE_WHILE,
@@ -40,7 +45,6 @@ typedef enum
 
     NODE_DECL_FUNCAO,
     NODE_DECL_VAR
-
 } NodeSpecies;
 
 typedef struct Node Node;
@@ -61,3 +65,5 @@ struct Node
 };
 
 typedef Node *PNode;
+
+#endif

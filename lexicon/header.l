@@ -6,50 +6,48 @@
 #include "../syntax/ast.h"
 #include "../syntax/header.tab.h"
 
-// Flex global variables
+int row_count;
 extern char *yytext;
 extern int yylineno;
-int lin_ini_com;
-
-
 extern YYSTYPE yylval;
 %}
 
 %option noyywrap yylineno 
 
-DIGIT       [0-9]
-LETTER      [a-zA-Z]
-ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
+INT       [0-9]
+CAR      [a-zA-Z]
+ID       {CAR}({CAR}|{INT}|_)*
 
 %x comment
 
 %%
 "programa"       { return TPROGRAM; }
 "car"            { return TCAR; }
-"int"            { return TINT; }
-"retorne"        { return TRETURN; }
 "leia"           { return TREAD; }
 "escreva"        { return TWRITE; }
+"retorne"        { return TRETURN; }
 "novalinha"      { return TNEWLINE; }
 "se"             { return TIF; }
-"entao"          { return TTHEN; }
 "senao"          { return TELSE; }
-"enquanto"       { return TWHILE; }
+"int"            { return TINT; }
+"entao"          { return TTHEN; }
 "execute"        { return TEXECUTE; }
 "e"              { return TAND; }
+"enquanto"       { return TWHILE; }
 "ou"             { return TOR; }
+
 "!"              { return TNEG; }
 "+"              { return TPLUS; }
 "-"              { return TMINUS; }
 "*"              { return TTIMES; }
 "/"              { return TDIVIDE; }
-"="              { return TASSIGN; }
 "=="             { return TEQ; }
 "!="             { return TNEQ; }
-"<"              { return TLT; }
 "<="             { return TLEQ; }
-">"              { return TGT; }
 ">="             { return TGEQ; }
+"="              { return TASSIGN; }
+"<"              { return TLT; }
+">"              { return TGT; }
 ";"              { return TSEMICOLON; }
 "("              { return TLPAREN; }
 ")"              { return TRPAREN; }
@@ -60,18 +58,14 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
 ","              { return TCOMMA; }
 
 {ID} {
+
     yylval.str = strdup(yytext);
     return TID_TOKEN;
 }
 
-{DIGIT}+ {
+{INT}+ {
     yylval.ival = atoi(yytext);
     return TINT_CONST;
-}
-
-\'([^\'\\\n]|\\.)\' {
-    yylval.cval = yytext[1];
-    return TCHAR_CONST;
 }
 
 \"([^"\\\n]|\\.)*\" {
@@ -79,14 +73,21 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
     return TSTRING_LITERAL;
 }
 
-\"([^"\\\n]|\\.)* {
-    fprintf(stderr, "ERRO: CADEIA DE CARACTERES OCUPA MAIS DE UMA LINHA, NA LINHA %d\n", yylineno);
-    return -1;
+
+\"([^"\\\n]|\\.)*$ {
+    fprintf(stderr, "[ERRO]: String nao foi finalizada de forma certa em %d\n", yylineno);
+    exit(1);
 }
+
+\'([^\'\\\n]|\\.)\' {
+    yylval.cval = yytext[1];
+    return TCHAR_CONST;
+}
+
 
 "/*" {
     BEGIN(comment);
-    lin_ini_com = yylineno;
+    row_count = yylineno;
 }
 
 <comment>"*/"    { BEGIN(INITIAL); }
@@ -96,18 +97,15 @@ ID          ([a-zA-Z]|_)[a-zA-Z0-9_]*
 <comment>.       {}
 
 <comment><<EOF>> {
-    fprintf(stderr, "ERRO: COMENTARIO NAO FINALIZADO NA LINHA %d\n", lin_ini_com);
+    fprintf(stderr, "[ERRO]: Comentario nao foi finalizado, na linha %d\n", row_count);
     exit(1);
 }
 
-[ \t\r]+        { /* Ignores spaces, tabs, and carriage returns */ }
-
-\n              {}
+[ \t\n]+       ;
 
 . {
-    fprintf(stderr, "ERRO: CARACTERE INVALIDO '%s' %d\n", yytext, yylineno);
-    return -1;
+    fprintf(stderr, "[ERRO]: Caractere invalido '%s', na linha %d\n", yytext, yylineno);
+   exit(1);
 }
 
 %%
-

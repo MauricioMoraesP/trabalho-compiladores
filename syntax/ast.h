@@ -1,13 +1,15 @@
 #ifndef AST_H
 #define AST_H
-#include "types.h"
 
-PNode cNodeAST(NodeSpecies species, int row, PNode first_children, PNode second_children, PNode third_children, char *lexem);
-PNode cNodeConstInt(int r, int value);
-PNode cNodeConstChar(int r, char value);
-PNode cNodeIdentifier(int r, char *lexem);
-const char *getNodeName(NodeSpecies type);
-void freeAST(PNode root);
-void printAST(PNode root, int lvl);
+#include "types.h"
+Node *createLeafNode(NSpecies s, int row, Types type, const char *lex, int val, char car_val);
+Node *createUnaryNode(NSpecies s, int row, Types type, Node *child);
+Node *createBinaryNode(NSpecies s, int row, Types type, Node *left, Node *right);
+Node *createIfElseNode(NSpecies s, int row, Types type, Node *cond, Node *then_node, Node *else_node);
+Node *createNnaryNode(NSpecies s, int row, Types type);
+void nnaryAddChild(Node *parent, Node *child);
+const char *getNodeName(NSpecies s);
+void printAST(Node *n, int lvl);
+void freeAST(Node *n);
 
 #endif

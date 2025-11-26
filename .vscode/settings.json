@@ -4,6 +4,13 @@
         "cstdlib": "c",
         "validations.h": "c",
         "stdlib.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "types.h": "c",
+        "structure.h": "c",
+        "helpers.h": "c",
+        "semantic.h": "c",
+        "string.h": "c",
+        "ast.h": "c",
+        "dictionary.h": "c"
     }
 }

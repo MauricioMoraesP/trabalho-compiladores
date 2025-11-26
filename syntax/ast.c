@@ -2,162 +2,410 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ast.h"
+#include "../symbol_table/utils/helpers.h"
+#include "utils/dictionary/dictionary.h"
 
-PNode cNodeAST(NodeSpecies species, int row, PNode first_children, PNode second_children, PNode third_children, char *lexem)
+/* Helper externo */
+extern void *helper_malloc(size_t size, const char *msg);
+
+/* =====================================================================
+   CREATE LEAF NODE
+   ===================================================================== */
+Node *createLeafNode(NSpecies s, int row, Types type, const char *lexeme,
+                     int int_val, char car_val)
 {
-    PNode node = (PNode)malloc(sizeof(Node));
-    if (!node)
+    Node *n = helper_malloc(sizeof(Node), "ao criar nó folha");
+
+    n->species = s;
+    n->type = type;
+    n->row = row;
+
+    n->data.leaf.lexeme = lexeme ? lexeme : NULL;
+    n->data.leaf.int_val = int_val;
+    n->data.leaf.char_val = car_val;
+
+    n->next = NULL;
+    return n;
+}
+
+/* =====================================================================
+   CREATE UNARY NODE
+   ===================================================================== */
+Node *createUnaryNode(NSpecies s, int row, Types type, Node *child)
+{
+    Node *n = helper_malloc(sizeof(Node), "ao criar nó unário");
+
+    n->species = s;
+    n->type = type;
+    n->row = row;
+
+    n->data.unary.n = child;
+    n->next = NULL;
+
+    return n;
+}
+
+/* =====================================================================
+   CREATE BINARY NODE
+   ===================================================================== */
+Node *createBinaryNode(NSpecies s, int row, Types type,
+                       Node *left, Node *right)
+{
+    Node *n = helper_malloc(sizeof(Node), "ao criar nó binário");
+
+    n->species = s;
+    n->type = type;
+    n->row = row;
+
+    n->data.binary.left = left;
+    n->data.binary.right = right;
+
+    n->next = NULL;
+    return n;
+}
+
+/* =====================================================================
+   CREATE IF ELSE NODE
+   ===================================================================== */
+Node *createIfElseNode(NSpecies s, int row, Types type,
+                       Node *cond, Node *then_b, Node *else_b)
+{
+    Node *n = helper_malloc(sizeof(Node), "ao criar nó if-else");
+
+    n->species = s;
+    n->type = type;
+    n->row = row;
+
+    n->data.ifelse.condition_node = cond;
+    n->data.ifelse.then_node = then_b;
+    n->data.ifelse.else_node = else_b;
+
+    n->next = NULL;
+    return n;
+}
+
+/* =====================================================================
+   CREATE NNARY NODE
+   ===================================================================== */
+Node *createNnaryNode(NSpecies s, int row, Types type)
+{
+    Node *n = helper_malloc(sizeof(Node), "ao criar nó n-nário");
+
+    n->species = s;
+    n->type = type;
+    n->row = row;
+
+    n->data.nnary.first = NULL;
+    n->next = NULL;
+
+    return n;
+}
+
+/* =====================================================================
+   ADD CHILD TO NNARY NODE
+   ===================================================================== */
+void nnaryAddChild(Node *parent, Node *child)
+{
+    if (!parent || !child)
+        return;
+
+    if (!parent->data.nnary.first)
     {
-        fprintf(stderr, "Erro: falha ao alocar memória para nó AST.\n");
-        exit(1);
+        parent->data.nnary.first = child;
+        child->next = NULL;
+        return;
     }
 
-    node->species = species;
-    node->row = row;
-    node->lexem = (lexem ? strdup(lexem) : NULL);
-    node->constant_value.val_int = 0;
-    node->constant_value.val_char = '\0';
-    node->child_one = first_children;
-    node->child_two = second_children;
-    node->child_three = third_children;
+    Node *last = parent->data.nnary.first;
+    while (last->next)
+        last = last->next;
 
-    return node;
+    last->next = child;
+    child->next = NULL;
 }
 
-PNode cNodeConstInt(int r, int value)
+/* =====================================================================
+   PRINT HELPERS
+   ===================================================================== */
+static void printIndent(int indent)
 {
-    PNode node = cNodeAST(NODE_INT_CONST, r, NULL, NULL, NULL, NULL);
-    node->constant_value.val_int = value;
-    return node;
+    for (int i = 0; i < indent; i++)
+        printf(" ");
 }
 
-PNode cNodeConstChar(int r, char value)
+static void printLeafNode(Node *n, int indent)
 {
-    PNode node = cNodeAST(NODE_CHAR_CONST, r, NULL, NULL, NULL, NULL);
-    node->constant_value.val_char = value;
-    return node;
-}
+    printIndent(indent);
+    printf("Leaf %d (linha %d)\n", n->species, n->row);
 
-PNode cNodeIdentifier(int r, char *lexem)
-{
-    return cNodeAST(NODE_IDENTIFICADOR, r, NULL, NULL, NULL, lexem);
-}
-
-void freeAST(PNode root)
-{
-    if (!root)
-        return;
-
-    freeAST(root->child_one);
-    freeAST(root->child_two);
-    freeAST(root->child_three);
-
-    if (root->lexem)
-        free(root->lexem);
-
-    free(root);
-}
-
-void printAST(PNode root, int lvl)
-{
-    if (!root)
-        return;
-
-    for (int i = 0; i < lvl; i++)
-        printf("  ");
-
-    printf("%s", getNodeName(root->species));
-
-    if (root->lexem)
-        printf(" (%s)", root->lexem);
-
-    if (root->species == NODE_INT_CONST)
-        printf(" = %d", root->constant_value.val_int);
-    else if (root->species == NODE_CHAR_CONST)
-        printf(" = '%c'", root->constant_value.val_char);
-
-    printf("\n");
-
-    printAST(root->child_one, lvl + 1);
-    printAST(root->child_two, lvl + 1);
-    printAST(root->child_three, lvl + 1);
-}
-
-const char *getNodeName(NodeSpecies type)
-{
-    switch (type)
+    printIndent(indent + 2);
+    switch (n->species)
     {
-    case NODE_PROGRAMA:
-        return "NODE_PROGRAMA";
-    case NODE_BLOCO:
-        return "NODE_BLOCO";
-    case NODE_LISTA_COMANDOS:
-        return "NODE_LISTA_COMANDOS";
-    case NODE_IF:
-        return "NODE_IF";
-    case NODE_IF_ELSE:
-        return "NODE_IF_ELSE";
-    case NODE_WHILE:
-        return "NODE_WHILE";
-    case NODE_ATRIBUICAO:
-        return "NODE_ATRIBUICAO";
-    case NODE_RETURN:
-        return "NODE_RETURN";
-    case NODE_LEIA:
-        return "NODE_LEIA";
-    case NODE_ESCREVA:
-        return "NODE_ESCREVA";
-    case NODE_ESCREVA_LITERAL:
-        return "NODE_ESCREVA_LITERAL";
-    case NODE_NOVALINHA:
-        return "NODE_NOVALINHA";
-    case NODE_CHAMADA_FUNCAO:
-        return "NODE_CHAMADA_FUNCAO";
-    case NODE_SOMA:
-        return "NODE_SOMA";
-    case NODE_SUBTRACAO:
-        return "NODE_SUBTRACAO";
-    case NODE_MULTIPLICACAO:
-        return "NODE_MULTIPLICACAO";
-    case NODE_DIVISAO:
-        return "NODE_DIVISAO";
-    case NODE_AND:
-        return "NODE_AND";
-    case NODE_OR:
-        return "NODE_OR";
-    case NODE_IGUAL:
-        return "NODE_IGUAL";
-    case NODE_DIFERENTE:
-        return "NODE_DIFERENTE";
-    case NODE_MENOR:
-        return "NODE_MENOR";
-    case NODE_MENOR_IGUAL:
-        return "NODE_MENOR_IGUAL";
-    case NODE_MAIOR:
-        return "NODE_MAIOR";
-    case NODE_MAIOR_IGUAL:
-        return "NODE_MAIOR_IGUAL";
-    case NODE_NEGACAO:
-        return "NODE_NEGACAO";
-    case NODE_MENOS_UNARIO:
-        return "NODE_MENOS_UNARIO";
-    case NODE_TIPO_INT:
-        return "NODE_TIPO_INT";
-    case NODE_TIPO_CAR:
-        return "NODE_TIPO_CAR";
-    case NODE_IDENTIFICADOR:
-        return "NODE_IDENTIFICADOR";
-    case NODE_INT_CONST:
-        return "NODE_INT_CONST";
-    case NODE_CHAR_CONST:
-        return "NODE_CHAR_CONST";
-    case NODE_STRING_LITERAL:
-        return "NODE_STRING_LITERAL";
-    case NODE_DECL_FUNCAO:
-        return "NODE_DECL_FUNCAO";
-    case NODE_DECL_VAR:
-        return "NODE_DECL_VAR";
+    case NOINT_CONST:
+        printf("Valor: %d\n", n->data.leaf.int_val);
+        break;
+    case NOCAR_CONST:
+        printf("Valor: '%c'\n", n->data.leaf.char_val);
+        break;
+    case NOSTRING_LITERAL:
+        printf("String: %s\n", n->data.leaf.lexeme);
+        break;
     default:
-        return "NODE_DESCONHECIDO";
+        printf("Lexema: %s\n", n->data.leaf.lexeme);
+        break;
     }
+}
+
+static void printUnaryNode(Node *n, int indent, const char *label)
+{
+    printIndent(indent);
+    printf("%s (linha %d)\n", label, n->row);
+    printAST(n->data.unary.n, indent + 2);
+}
+
+static void printBinaryNode(Node *n, int indent, const char *label)
+{
+    printIndent(indent);
+    printf("%s (linha %d)\n", label, n->row);
+
+    printIndent(indent + 2);
+    printf("Left:\n");
+    printAST(n->data.binary.left, indent + 4);
+
+    printIndent(indent + 2);
+    printf("Right:\n");
+    printAST(n->data.binary.right, indent + 4);
+}
+
+static void printIfElseNode(Node *n, int indent)
+{
+    printIndent(indent);
+    printf("IF/ELSE (linha %d)\n", n->row);
+
+    printIndent(indent + 2);
+    printf("Condicao:\n");
+    printAST(n->data.ifelse.condition_node, indent + 4);
+
+    printIndent(indent + 2);
+    printf("Entao:\n");
+    printAST(n->data.ifelse.then_node, indent + 4);
+
+    if (n->data.ifelse.else_node)
+    {
+        printIndent(indent + 2);
+        printf("Senao:\n");
+        printAST(n->data.ifelse.else_node, indent + 4);
+    }
+}
+
+static void printNnaryNode(Node *n, int indent, const char *label)
+{
+    printIndent(indent);
+    printf("%s (linha %d)\n", label, n->row);
+
+    Node *child = n->data.nnary.first;
+    while (child)
+    {
+        printAST(child, indent + 2);
+        child = child->next;
+    }
+}
+
+static const char *typeName(Types t)
+{
+    switch (t)
+    {
+    case TYINT:
+        return "TYINT";
+    case TYCAR:
+        return "TYCAR";
+    case TYVOID:
+        return "TYVOID";
+    }
+    return "UNKNOWN";
+}
+
+void printAST(Node *node, int indent)
+{
+    if (!node)
+        return;
+
+    const NodeDictionaryEntry *info = findInfosNode(node->species);
+
+    printIndent(indent);
+
+    if (info)
+        printf("%s (linha %d, tipo=%s)\n", info->name, node->row, typeName(node->type));
+    else
+        printf("UnknownNode (linha %d)\n", node->row);
+
+    /* ---------------------- LEAF ---------------------- */
+    if (info && info->type == NODE_LEAF)
+    {
+        printIndent(indent + 1);
+
+        switch (node->species)
+        {
+        case NOINT_CONST:
+            printf("Valor int: %d\n", node->data.leaf.int_val);
+            break;
+        case NOCAR_CONST:
+            printf("Valor char: '%c'\n", node->data.leaf.char_val);
+            break;
+        case NOSTRING_LITERAL:
+            printf("String: \"%s\"\n", node->data.leaf.lexeme);
+            break;
+        default:
+            printf("Lexema: %s\n", node->data.leaf.lexeme ? node->data.leaf.lexeme : "(null)");
+            break;
+        }
+        return;
+    }
+
+    /* ---------------------- UNARY ---------------------- */
+    if (info && info->type == NODE_UNARY)
+    {
+        printAST(node->data.unary.n, indent + 1);
+        return;
+    }
+
+    /* ---------------------- BINARY ---------------------- */
+    if (info && info->type == NODE_BINARY)
+    {
+        printIndent(indent + 1);
+        printf("Left:\n");
+        printAST(node->data.binary.left, indent + 2);
+
+        printIndent(indent + 1);
+        printf("Right:\n");
+        printAST(node->data.binary.right, indent + 2);
+        return;
+    }
+
+    /* ---------------------- IF/ELSE ---------------------- */
+    if (info && info->type == NODE_IFELSE)
+    {
+        printIndent(indent + 1);
+        printf("Condicao:\n");
+        printAST(node->data.ifelse.condition_node, indent + 2);
+
+        printIndent(indent + 1);
+        printf("Entao:\n");
+        printAST(node->data.ifelse.then_node, indent + 2);
+
+        if (node->data.ifelse.else_node)
+        {
+            printIndent(indent + 1);
+            printf("Senao:\n");
+            printAST(node->data.ifelse.else_node, indent + 2);
+        }
+        return;
+    }
+
+    /* ---------------------- NNARY ---------------------- */
+    if (info && info->type == NODE_GENERIC)
+    {
+        Node *child = node->data.nnary.first;
+        while (child)
+        {
+            printAST(child, indent + 1);
+            child = child->next;
+        }
+        return;
+    }
+
+    /* fallback */
+    Node *child = node->data.nnary.first;
+    while (child)
+    {
+        printAST(child, indent + 1);
+        child = child->next;
+    }
+}
+
+/* =====================================================================
+   FREE AST
+   ===================================================================== */
+void freeAST(Node *n)
+{
+    if (!n)
+    {
+        printf("[freeAST] Nó nulo recebido, nada a liberar.\n");
+        return;
+    }
+
+    printf("[freeAST] Liberando nó %p, tipo %d, linha %d\n", (void *)n, n->species, n->row);
+
+    switch (n->species)
+    {
+    case NOINT_CONST:
+    case NOCAR_CONST:
+    case NOSTRING_LITERAL:
+    case NOIDENTIFICADOR:
+        if (n->data.leaf.lexeme)
+        {
+            printf("  [freeAST] Nó folha com lexema '%s' em %p, liberando lexema %p\n",
+                   n->data.leaf.lexeme, (void *)n, (void *)n->data.leaf.lexeme);
+            free(n->data.leaf.lexeme);
+        }
+        else
+        {
+            printf("  [freeAST] Nó folha sem lexema em %p\n", (void *)n);
+        }
+        break;
+
+    case NONEGACAO:
+    case NOMENOS_UNARIO:
+        printf("  [freeAST] Nó unário, liberando filho %p\n", (void *)n->data.unary.n);
+        freeAST(n->data.unary.n);
+        break;
+
+    case NOWHILE:
+    case NOSOMA:
+    case NOSUBTRACAO:
+    case NOMULTIPLICACAO:
+    case NODIVISAO:
+    case NOOR:
+    case NOAND:
+    case NOIGUAL:
+    case NODIFERENTE:
+    case NOMENOR:
+    case NOMENOR_IGUAL:
+    case NOMAIOR:
+    case NOMAIOR_IGUAL:
+    case NOATRIBUICAO:
+        printf("  [freeAST] Nó binário, liberando left %p e right %p\n",
+               (void *)n->data.binary.left, (void *)n->data.binary.right);
+        freeAST(n->data.binary.left);
+        freeAST(n->data.binary.right);
+        break;
+
+    case NOIF_ELSE:
+        printf("  [freeAST] Nó IF-ELSE, liberando condition %p, then %p, else %p\n",
+               (void *)n->data.ifelse.condition_node,
+               (void *)n->data.ifelse.then_node,
+               (void *)n->data.ifelse.else_node);
+        freeAST(n->data.ifelse.condition_node);
+        freeAST(n->data.ifelse.then_node);
+        freeAST(n->data.ifelse.else_node);
+        break;
+
+    default:
+        printf("  [freeAST] Nó n-ário, percorrendo filhos...\n");
+        for (Node *c = n->data.nnary.first, *next; c; c = next)
+        {
+            next = c->next;
+            printf("    [freeAST] Liberando filho %p\n", (void *)c);
+            freeAST(c);
+        }
+        break;
+    }
+
+    if (n->species == NOBLOCO)
+    {
+        printf("[freeAST] Liberando NOBLOCO final na linha %d, endereço %p\n", n->row, (void *)n);
+    }
+
+    printf("[freeAST] Free nó %p concluído\n\n", (void *)n);
+    free(n);
 }

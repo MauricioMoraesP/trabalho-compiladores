@@ -1,203 +1,216 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include "header.h"
-#include "utils/validations.h"
+#include <stdlib.h>
 #include <string.h>
+#include "structure.h"
+#include "utils/helpers.h"
 
-// Initialize TableStack
-void initializeSymbolTableStack(SymbolTableStack **stack)
+// Inicializacao da tabela de simbolos.
+void initialize_symbol_table(SymbolTable **table)
 {
-    *stack = (SymbolTableStack *)malloc(sizeof(SymbolTableStack));
-    verifyStackIsNull(*stack, "Nao foi INICIALIZAR a pilha de escopos.\n");
-    (*stack)->top = -1;
-    printf("Sucesso: Pilha de tabelas de simbolos INICIALIZADA!\n");
+    *table = helper_malloc(sizeof(SymbolTable), "inicializacao da tabela de simbolos");
+    (*table)->entries = NULL;
+    (*table)->first_entry = NULL;
+    (*table)->last_entry = NULL;
+    (*table)->next_scope = NULL;
+    (*table)->before_scope = NULL;
+    (*table)->level = 0;
+}
+// Criacao de um novo escopo na tabela.
+void create_new_scope(SymbolTable **scope)
+{
+    SymbolTable *new_scope = helper_malloc(sizeof(SymbolTable), "criacao de escopo");
+    new_scope->entries = NULL;
+    new_scope->first_entry = NULL;
+    new_scope->last_entry = NULL;
+    new_scope->before_scope = *scope;
+    new_scope->level = (*scope) ? ((*scope)->level + 1) : 0;
+    new_scope->next_scope = NULL;
+    if (*scope)
+        (*scope)->next_scope = new_scope;
+    *scope = new_scope;
 }
 
-// Create a new scope in TableStack
-void createNewScope(SymbolTableStack *stack)
+// Remove o escopo atual.
+void remove_current_scope(SymbolTable **scope)
 {
-    verifyStackIsNull(stack, "A pilha de escopo não foi INICIALIZADA, portanto, não é possível CRIAR um novo escopo.\n");
-    verifyBurstStack(stack, "Houve um estouro de pilha de ESCOPOS. Nao e possivel CRIAR um novo escopo\n");
-    stack->top++;
-    stack->tables[stack->top] = (SymbolTable *)malloc(sizeof(SymbolTable));
-    if (stack->tables[stack->top] == NULL)
+    helper_not_null(scope, "remover o escopo atual.");
+    SymbolTable *current = *scope;
+    SymbolEntry *entry = current->last_entry;
+
+    *scope = current->before_scope;
+    if (*scope != NULL)
+        (*scope)->next_scope = NULL;
+
+    while (entry != NULL)
     {
-        printf("Erro: Falha na alocação de memória para a tabela de símbolos\n");
-        exit(EXIT_FAILURE);
-    }
-    stack->tables[stack->top]->entries = NULL;
-    stack->tables[stack->top]->count = 0;
-    printf("Sucesso: Escopo CRIADO.\n");
-}
+        SymbolEntry *prev = entry->before_symbol;
+        if (entry->lexeme.lex)
+            free(entry->lexeme.lex);
 
-// Search for a symbol by name in the stack (from top scope down)
-SymbolEntry *tableSearchName(SymbolTableStack *stack, char *name)
-{
-    if (verifyStackIsNullSucess(stack, "A tabela de símbolos está VAZIA, logo não tem conteúdo nela."))
-        return NULL;
-
-    for (int i = stack->top; i >= 0; i--)
-    {
-        SymbolTable *currentTable = stack->tables[i];
-        if (currentTable == NULL || currentTable->entries == NULL)
-            continue;
-
-        for (int j = 0; j < currentTable->count; j++)
+        if (entry->entry == FUN_ENTRY && entry->data.fun_data.param_types)
         {
-            if (strcmp(currentTable->entries[j].lexeme.lex, name) == 0)
-            {
-                return &currentTable->entries[j];
-            }
+            free(entry->data.fun_data.param_types);
+            entry->data.fun_data.param_types = NULL;
         }
+
+        free(entry);
+        entry = prev;
+    }
+    free(current);
+}
+
+void destroy_symbol_table(SymbolTable *table)
+{
+    if (!table)
+        return;
+
+    destroy_symbol_table(table->next_scope);
+
+    SymbolEntry *curr = table->first_entry;
+    while (curr)
+    {
+        SymbolEntry *next = curr->next_symbol;
+        if (curr->lexeme.lex)
+            free(curr->lexeme.lex);
+
+        if (curr->entry == FUN_ENTRY && curr->data.fun_data.param_types)
+        {
+            free(curr->data.fun_data.param_types);
+            curr->data.fun_data.param_types = NULL;
+        }
+
+        free(curr);
+        curr = next;
     }
 
+    free(table);
+}
+
+// Procura um lexema no escopo.
+SymbolEntry *table_search_name_in_scope(SymbolTable *scope, char *name)
+{
+    SymbolTable *current = scope;
+    while (current != NULL)
+    {
+        SymbolEntry *entry = current->first_entry;
+        while (entry != NULL)
+        {
+            if (entry->lexeme.lex && name && strcmp(entry->lexeme.lex, name) == 0)
+                return entry;
+
+            entry = entry->next_symbol;
+        }
+        current = current->before_scope;
+    }
     return NULL;
 }
 
-// Remove the current (top) scope from the stack
-void removeCurrentScope(SymbolTableStack *stack)
+// Funcao generica para insercao de simbolos.
+void insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position)
 {
-    verifyStackUnderflow(stack, "Não é possível REMOVER um ESCOPO. A pilha já está vazia.\n");
-    free(stack->tables[stack->top]);
-    stack->tables[stack->top] = NULL;
-    stack->top--;
-    printf("Sucesso: Escopo REMOVIDO.\n");
-}
+    helper_not_null(scope, "inserir um novo simbolo");
 
-// Insert a function into the current scope
-void insertFunction(SymbolTableStack *stack, char *name, int num_params, DataType return_type, ParameterNode *params_list)
-{
-    verifyStackUnderflow(stack, "Não há escopo ativo para inserir a FUNÇÃO.");
+    SymbolEntry *new_entry = helper_malloc(sizeof(SymbolEntry), "insercao de simbolo");
+    new_entry->lexeme.lex = strdup(name);
+    new_entry->type = data_type;
+    new_entry->entry = entry_type;
+    new_entry->next_symbol = NULL;
+    new_entry->before_symbol = scope->last_entry;
 
-    if (symbolExistsInCurrentScope(stack, name))
+    if (!scope->first_entry)
     {
-        printf("Erro: Função '%s' já declarada neste escopo.\n", name);
-        exit(EXIT_FAILURE);
+        scope->first_entry = new_entry;
+        scope->entries = new_entry;
+    }
+    else
+    {
+        scope->last_entry->next_symbol = new_entry;
     }
 
-    SymbolTable *currentTable = stack->tables[stack->top];
-    ensureSpaceForEntry(currentTable,
-                        "Falha ao alocar memória para a primeira FUNÇÃO.",
-                        "Falha ao realocar memória para FUNÇÕES.");
+    scope->last_entry = new_entry;
 
-    SymbolEntry newEntry;
-    strncpy(newEntry.lexeme.lex, name, NAME_IDENTIFIER - 1);
-    newEntry.lexeme.lex[NAME_IDENTIFIER - 1] = '\0';
-
-    newEntry.entry = FUN_ENTRY;
-    newEntry.type = return_type;
-
-    newEntry.data.fun_data.num_params = num_params;
-    newEntry.data.fun_data.return_type = return_type;
-    newEntry.data.fun_data.params_list = params_list;
-
-    currentTable->entries[currentTable->count++] = newEntry;
-
-    printf("Função '%s' (num_params=%d) INSERIDA com sucesso no escopo atual.\n",
-           name, num_params);
-}
-
-// Insert a variable into the current scope
-void insertVariable(SymbolTableStack *stack, char *name, DataType type)
-{
-    verifyStackUnderflow(stack, "Não há escopo ativo para inserir a VARIÁVEL.");
-
-    if (symbolExistsInCurrentScope(stack, name))
+    if (entry_type == FUN_ENTRY)
     {
-        printf("Erro: Variável '%s' já declarada neste escopo.\n", name);
-        exit(EXIT_FAILURE);
+        new_entry->data.fun_data.count_params = num_params;
+        new_entry->data.fun_data.type = data_type;
+        new_entry->data.fun_data.param_types = param_types;
     }
-
-    SymbolTable *currentTable = stack->tables[stack->top];
-    ensureSpaceForEntry(currentTable,
-                        "Falha ao alocar memória para a primeira VARIÁVEL.",
-                        "Falha ao realocar memória para VARIÁVEIS.");
-
-    SymbolEntry newEntry;
-    strncpy(newEntry.lexeme.lex, name, NAME_IDENTIFIER - 1);
-    newEntry.lexeme.lex[NAME_IDENTIFIER - 1] = '\0';
-
-    newEntry.entry = VAR_ENTRY;
-    newEntry.type = type;
-    newEntry.data.var_data.scope_level = stack->top;
-    newEntry.data.var_data.declaration_position = currentTable->count + 1;
-
-    currentTable->entries[currentTable->count++] = newEntry;
-
-    printf("Variável '%s' (pos=%d) INSERIDA com sucesso no escopo atual.\n",
-           name, newEntry.data.var_data.declaration_position);
-}
-
-// Insert a parameter into the current scope
-void insertParameter(SymbolTableStack *stack, char *name, DataType type)
-{
-    verifyStackUnderflow(stack, "Não há escopo ativo para inserir o PARÂMETRO.");
-
-    if (symbolExistsInCurrentScope(stack, name))
+    else
     {
-        printf("Erro: Parâmetro '%s' já declarado neste escopo.\n", name);
-        exit(EXIT_FAILURE);
+        new_entry->data.var_info.scope_level = scope->level;
+        new_entry->data.var_info.declaration_position = declaration_position;
     }
-
-    SymbolTable *currentTable = stack->tables[stack->top];
-    ensureSpaceForEntry(currentTable,
-                        "Falha ao alocar memória para o primeiro PARÂMETRO.",
-                        "Falha ao realocar memória para PARÂMETROS.");
-
-    SymbolEntry newEntry;
-    strncpy(newEntry.lexeme.lex, name, NAME_IDENTIFIER - 1);
-    newEntry.lexeme.lex[NAME_IDENTIFIER - 1] = '\0';
-
-    newEntry.entry = PARAM_ENTRY;
-    newEntry.type = type;
-    newEntry.data.var_data.scope_level = stack->top;
-    newEntry.data.var_data.declaration_position = currentTable->count + 1;
-
-    currentTable->entries[currentTable->count++] = newEntry;
-
-    printf("Parâmetro '%s' (pos=%d) INSERIDO com sucesso no escopo atual.\n",
-           name, newEntry.data.var_data.declaration_position);
 }
 
-// Destroy the entire symbol table stack and free all memory
-void destroySymbolTableStack(SymbolTableStack *stack)
+void insert_function(SymbolTable *scope, char *name, DataType type, int num_params, DataType *param_types)
 {
-    if (verifyStackIsNullSucess(stack, "A tabela de símbolos já está VAZIA, logo não tem conteúdo nela."))
+    insert_symbol(scope, name, FUN_ENTRY, type, num_params, param_types, 0);
+}
+
+void insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position)
+{
+    insert_symbol(scope, name, VAR_ENTRY, type, 0, NULL, declaration_position);
+}
+
+void insert_parameter(SymbolTable *scope, char *name, DataType type, int position)
+{
+    insert_symbol(scope, name, PARAM_ENTRY, type, 0, NULL, position);
+}
+// Impressao dos simbolos por escopo.
+void print_symbol_entry(SymbolEntry *entry)
+{
+    if (entry == NULL)
+    {
+        printf("Ponteiro nulo!\n");
         return;
-
-    for (int i = stack->top; i >= 0; i--)
-    {
-        if (stack->tables[i] != NULL)
-        {
-            if (stack->tables[i]->entries != NULL)
-            {
-                for (int j = 0; j < stack->tables[i]->count; j++)
-                {
-                    SymbolEntry *entry = &stack->tables[i]->entries[j];
-
-                    if (entry->entry == FUN_ENTRY && entry->data.fun_data.params_list != NULL)
-                    {
-                        ParameterNode *current = entry->data.fun_data.params_list;
-                        while (current != NULL)
-                        {
-                            ParameterNode *next = current->next;
-                            free(current);
-                            current = next;
-                        }
-
-                        entry->data.fun_data.params_list = NULL;
-                    }
-                }
-
-                free(stack->tables[i]->entries);
-                stack->tables[i]->entries = NULL;
-            }
-
-            free(stack->tables[i]);
-            stack->tables[i] = NULL;
-        }
     }
 
-    free(stack);
-    printf("Sucesso: Pilha de tabelas de símbolos DESTRUIDA.\n");
+    if (entry->entry == VAR_ENTRY || entry->entry == PARAM_ENTRY)
+    {
+        printf("Tipo de entrada: %s\nLexema: %s\nTipo de dado: %s\nScope lvl: %d \n Posicao: %d\n",
+               (entry->entry == VAR_ENTRY) ? "Var" : "Param",
+               entry->lexeme.lex,
+               entry->type == CAR_TYPE ? "CHAR" : "INT",
+               entry->data.var_info.scope_level,
+               entry->data.var_info.declaration_position);
+    }
+    else if (entry->entry == FUN_ENTRY)
+    {
+        printf("Tipo de entrada: Funcao\nLexema: %s\nTipo de retorno: %s\nNumero de parametros: %d \n Tipos: ",
+               entry->lexeme.lex,
+               entry->data.fun_data.type == INT_TYPE ? "INT" : "CHAR",
+               entry->data.fun_data.count_params);
+
+        for (int i = 0; i < entry->data.fun_data.count_params; i++)
+        {
+            printf("%s", entry->data.fun_data.param_types[i] == CAR_TYPE ? "CHAR" : "INT");
+            if (i < entry->data.fun_data.count_params - 1)
+                printf(" | ");
+        }
+        printf("\n\n");
+    }
+    else if (entry->entry != VAR_ENTRY && entry->entry != PARAM_ENTRY && entry->entry != FUN_ENTRY)
+    {
+        printf("Tipo de entrada desconhecido.\n");
+        return;
+    }
+}
+// Impressao de todos os simbolos
+void print_symbol_table(SymbolTable *table)
+{
+    helper_not_null(table, "A tabela esta vazia.");
+
+    printf("Inicializacao da impressao da tabela de simbolos.\n");
+    printf("Level da tabela de simbolos e de : %d\n", table->level);
+
+    SymbolEntry *current = table->first_entry;
+    while (current != NULL)
+    {
+        print_symbol_entry(current);
+        current = current->next_symbol;
+    }
+    if (table->next_scope)
+    {
+        print_symbol_table(table->next_scope);
+    }
 }

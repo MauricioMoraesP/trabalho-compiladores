@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     yyin = fopen(argv[1], "r");
     if (!yyin)
     {
-        perror("Erro ao abrir arquivo");
+        printf("Erro ao abrir arquivo");
         return 1;
     }
 

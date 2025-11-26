@@ -1,69 +1,104 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include "../symbol_table/structure.h"
+
 typedef enum
 {
-    NODE_PROGRAMA,
-    NODE_BLOCO,
-    NODE_LISTA_COMANDOS,
-    NODE_LISTA_EXPRESSOES,
+    TYINT,
+    TYCAR,
+    TYVOID
+} Types;
 
-    NODE_IF,
-    NODE_IF_ELSE,
-    NODE_WHILE,
-    NODE_ATRIBUICAO,
-    NODE_RETURN,
-    NODE_LEIA,
-    NODE_ESCREVA,
-    NODE_ESCREVA_LITERAL,
-    NODE_NOVALINHA,
-    NODE_CHAMADA_FUNCAO,
+typedef enum
+{
+    NODECL_VAR,
+    NODECL_FUNCAO,
+    NOCHAMADA_FUNCAO,
+    NOATRIBUICAO,
+    NOBLOCO,
+    NOIF,
+    NOIF_ELSE,
+    NOWHILE,
+    NORETURN,
+    NOWRITE,
+    NOREAD,
+    NONEWLINE,
+    NOWRITE_LITERAL,
+    NOSOMA,
+    NOMULTIPLICACAO,
+    NOSUBTRACAO,
+    NODIVISAO,
+    NOOR,
+    NOAND,
+    NOIGUAL,
+    NODIFERENTE,
+    NOMENOR,
+    NOMENOR_IGUAL,
+    NOMAIOR,
+    NOMAIOR_IGUAL,
+    NONEGACAO,
+    NOMENOS_UNARIO,
+    NOIDENTIFICADOR,
+    NOINT_CONST,
+    NOCAR_CONST,
+    NOSTRING_LITERAL,
+    NOLISTA_COMANDOS,
+    NOPROGRAMA,
+    NOLISTA_EXPR,
+    NOLISTA_DECL,
+    NOFUNC_COMPONENTS,
+} NSpecies;
 
-    NODE_SOMA,
-    NODE_SUBTRACAO,
-    NODE_MULTIPLICACAO,
-    NODE_DIVISAO,
-    NODE_AND,
-    NODE_OR,
-
-    NODE_IGUAL,
-    NODE_DIFERENTE,
-    NODE_MENOR,
-    NODE_MENOR_IGUAL,
-    NODE_MAIOR,
-    NODE_MAIOR_IGUAL,
-
-    NODE_NEGACAO,
-    NODE_MENOS_UNARIO,
-
-    NODE_TIPO_INT,
-    NODE_TIPO_CAR,
-    NODE_IDENTIFICADOR,
-    NODE_INT_CONST,
-    NODE_CHAR_CONST,
-    NODE_STRING_LITERAL,
-
-    NODE_DECL_FUNCAO,
-    NODE_DECL_VAR
-} NodeSpecies;
+typedef struct LeafInfo
+{
+    char *lexeme;
+    int int_val;
+    char char_val;
+} LeafInfo;
 
 typedef struct Node Node;
 
+typedef struct NUnary
+{
+    Node *n;
+} NUnary;
+
+typedef struct NBinary
+{
+    Node *left;
+    Node *right;
+} BinaryNode;
+
+typedef struct IfElseNode
+{
+    Node *condition_node;
+    Node *then_node;
+    Node *else_node;
+} IfElseNode;
+
+typedef struct Nnary
+{
+    Node *first;
+} Nnary;
+
+typedef union NodeInfo
+{
+    NUnary unary;
+    BinaryNode binary;
+    IfElseNode ifelse;
+    LeafInfo leaf;
+    Nnary nnary;
+} NodeInfo;
+
 struct Node
 {
-    NodeSpecies species;
+    NSpecies species;
+    Types type;
     int row;
-    char *lexem;
-    union
-    {
-        int val_int;
-        char val_char;
-    } constant_value;
-    Node *child_one;
-    Node *child_two;
-    Node *child_three;
-};
+    NodeInfo data;
 
-typedef Node *PNode;
+    struct Node *next;
+};
 
 #endif

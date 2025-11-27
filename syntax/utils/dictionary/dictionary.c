@@ -41,6 +41,7 @@ const NodeDictionaryEntry NODE_DICTIONARY[] = {
     {NOPROGRAMA, "Programa", NODE_GENERIC, -1, 0},
     {NOLISTA_EXPR, "ListaExpr", NODE_GENERIC, -1, 0},
     {NOLISTA_DECL, "ListaDeclVar", NODE_GENERIC, -1, 0},
+    {NOLISTA_PARAMS, "ListaParametros", NODE_GENERIC, -1, 0},
     {NOFUNC_COMPONENTS, "ComponentesFunc", NODE_GENERIC, -1, 0},
     {(NSpecies)-1, NULL, 0, 0, 0},
 };

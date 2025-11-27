@@ -20,6 +20,10 @@ int yylex();
 void yyerror(const char *s);
 Node* root = NULL;
 int error = 0;
+SymbolTable *global=NULL;
+SymbolTable *current=NULL;
+int declaration_position = 0;
+
 %}
 
 %union {
@@ -61,6 +65,7 @@ int error = 0;
 Programa:
     DeclFuncVar DeclProg {
         Node *program = createNnaryNode(NOPROGRAMA, yylineno, TYVOID);
+
         if ($1 && $1->data.nnary.first) {
             Node *child = $1->data.nnary.first;
             while (child) {
@@ -69,7 +74,6 @@ Programa:
                 child = next;
             }
         }
-        if ($1) free($1);
 
         if ($2)
             nnaryAddChild(program, $2);
@@ -83,6 +87,8 @@ DeclFuncVar:
         Node *decl = createNnaryNode(NODECL_VAR, yylineno, $1);
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnaryAddChild(decl, id);
+        insert_variable(current, $2, $1, declaration_position);
+
 
         /* se houver lista de identificadores vindos de DeclVar, movê-los com segurança */
         if ($3 && $3->data.nnary.first) {
@@ -93,39 +99,59 @@ DeclFuncVar:
                 child = next;
             }
         }
-        /* CORREÇÃO 1: Libera o nó container $3 (DeclVar) */
-        if ($3) free($3);
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free($2);
 
         Node *list = ($5 ? $5 : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID));
         nnaryAddChild(list, decl);
         $$ = list;
     }
-    | Tipo TID_TOKEN DeclFunc DeclFuncVar {
+       | Tipo TID_TOKEN DeclFunc DeclFuncVar {
+        /* Inserir função no escopo global com tipos de parametro */
         Node *func = createNnaryNode(NODECL_FUNCAO, yylineno, $1);
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
-
         nnaryAddChild(func, id);
-        
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free($2);
 
-        Node *child = $3->data.nnary.first;
-        while (child) {
-            Node *next = child->next;
-            nnaryAddChild(func, child);
-            child = next;
+        /* extrair lista de parametros do $3 (DeclFunc -> wrap: params, bloco) */
+        Node *params_node = NULL;
+        if ($3 && $3->data.nnary.first) {
+            params_node = $3->data.nnary.first; /* primeiro filho é ListaParametros */
+        }
+        int num_params = 0;
+        DataType *param_types = NULL;
+        if (params_node && params_node->data.nnary.first) {
+            Node *p = params_node->data.nnary.first;
+            while (p) { num_params++; p = p->next; }
+            param_types = malloc(sizeof(DataType) * num_params);
+            int i = 0;
+            p = params_node->data.nnary.first;
+            while (p) {
+                param_types[i++] = (p->type == TYINT ? INT_TYPE : CAR_TYPE);
+                p = p->next;
+            }
+        }
+        if (global) {
+            insert_function(global, $2,
+                ($1 == TYINT ? INT_TYPE : CAR_TYPE),
+                num_params, param_types);
+        } else {
+            insert_function(current ? current : global, $2,
+                ($1 == TYINT ? INT_TYPE : CAR_TYPE),
+                num_params, param_types);
         }
 
-        /* CORREÇÃO 2: Libera o nó container $3 (DeclFunc/NOFUNC_COMPONENTS) */
-        if ($3) free($3);
-
+        if ($3 && $3->data.nnary.first) {
+            Node *child = $3->data.nnary.first;
+            while (child) {
+                Node *next = child->next;
+                nnaryAddChild(func, child);
+                child = next;
+            }
+        }
         Node *list = $4 ? $4 : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
         nnaryAddChild(list, func);
         $$ = list;
     }
-    | %empty { $$ = NULL; }
+     | %empty { $$ = NULL; }
+
 ;
 
 
@@ -137,14 +163,10 @@ DeclProg:
 DeclVar:
     TCOMMA TID_TOKEN DeclVar {
         Node *id_node = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $2, 0, 0);
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free($2);
-
         /* criar nova lista com o id atual em primeiro */
         Node *list = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
         nnaryAddChild(list, id_node);
 
-        /* anexar (mover) os filhos de $3, se existirem, após o id atual */
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
             while (child) {
@@ -155,11 +177,6 @@ DeclVar:
                 child = next;
             }
         }
-
-        /* liberar o container antigo para evitar vazamento */
-        if ($3)
-            free($3);
-
         $$ = list;
     }
     | %empty { $$ = NULL; }
@@ -167,24 +184,29 @@ DeclVar:
 
 
 DeclFunc:
-    TLPAREN ListaParametros TRPAREN Bloco { 
+    TLPAREN { create_new_scope(&current); declaration_position = 0; }
+    ListaParametros TRPAREN Bloco 
+    { 
         Node *wrap = createNnaryNode(NOFUNC_COMPONENTS, yylineno, TYVOID);
         
-        Node *params = $2; 
-        if (!params) {
-             params = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
-        }
-        
+        Node *params = $3;   // ✔ correto
+        if (!params)
+            params = createNnaryNode(NOLISTA_PARAMS, yylineno, TYVOID);
+
         nnaryAddChild(wrap, params);
-        nnaryAddChild(wrap, $4);
+        nnaryAddChild(wrap, $5);  // ✔ correto
+
+        remove_current_scope(&current);
         $$ = wrap;
     }
 ;
 
 
+
+
 ListaParametros:
      %empty {
-         $$ = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+         $$ = createNnaryNode(NOLISTA_PARAMS, yylineno, TYVOID);
      }
     |
      ListaParametrosCont {
@@ -192,43 +214,64 @@ ListaParametros:
      }
 ;
 
-
 ListaParametrosCont:
      Tipo TID_TOKEN {
-         Node *list = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+         Node *list = createNnaryNode(NOLISTA_PARAMS, yylineno, TYVOID);
+
          Node *param = createLeafNode(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnaryAddChild(list, param);
-         /* CORREÇÃO 4: Libera o lexema $2 */
-         free($2);
+
+         if (current) {
+             int r = insert_parameter(current, $2,
+                 ($1 == TYINT ? INT_TYPE : CAR_TYPE),
+                 declaration_position++);
+             if (r != 0) {
+                 fprintf(stderr,
+                     "Erro semântico: parametro '%s' já declarado (linha %d).\n",
+                     $2, yylineno);
+                 error = 1;
+             }
+         }
+
          $$ = list;
      }
     | Tipo TID_TOKEN TCOMMA ListaParametrosCont {
-         Node *list = $4 ? $4 : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+
+         Node *list = $4;
          Node *param = createLeafNode(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnaryAddChild(list, param);
-         /* CORREÇÃO 4: Libera o lexema $2 */
-         free($2);
+
+         if (current) {
+             int r = insert_parameter(current, $2,
+                 ($1 == TYINT ? INT_TYPE : CAR_TYPE),
+                 declaration_position++);
+             if (r != 0) {
+                 fprintf(stderr,
+                     "Erro semântico: parametro '%s' já declarado (linha %d).\n",
+                     $2, yylineno);
+                 error = 1;
+             }
+         }
+
          $$ = list;
      }
 ;
 
 Bloco:
-    TLBRACE ListaDeclVar ListaComando TRBRACE {
-        Node *bloco = createNnaryNode(NOBLOCO, yylineno, TYVOID);
-        /* ------ Mover declarações ($2) ------ */
-        if ($2) {
-            Node *child = $2->data.nnary.first;
-            while (child) {
-                Node *next = child->next;
-                child->next = NULL;
-                nnaryAddChild(bloco, child);
-                child = next;
-            }
-            free($2);   /* libera o contêiner */
-            $2 = NULL;
-        }
+    TLBRACE 
+    {
+        create_new_scope(&current);
+        declaration_position = 0;
 
-        /* ------ Mover comandos ($3) ------ */
+    }
+    ListaDeclVar
+    ListaComando
+    TRBRACE
+    {
+        remove_current_scope(&current);
+        Node *bloco = createNnaryNode(NOBLOCO, yylineno, TYVOID);
+
+        /* $3 = ListaDeclVar */
         if ($3) {
             Node *child = $3->data.nnary.first;
             while (child) {
@@ -237,12 +280,23 @@ Bloco:
                 nnaryAddChild(bloco, child);
                 child = next;
             }
-            free($3);  
-            $3 = NULL;
         }
+
+        /* $4 = ListaComando */
+        if ($4) {
+            Node *child = $4->data.nnary.first;
+            while (child) {
+                Node *next = child->next;
+                child->next = NULL;
+                nnaryAddChild(bloco, child);
+                child = next;
+            }
+        }
+
         $$ = bloco;
     }
 ;
+
 
 
 
@@ -251,36 +305,60 @@ ListaDeclVar:
         $$ = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
     }
     |
-    Tipo TID_TOKEN DeclVar TSEMICOLON ListaDeclVar {
-
-        /* Declaração individual */
+    Tipo TID_TOKEN DeclVar TSEMICOLON ListaDeclVar 
+    {
+        /* Criar declaração individual */
         Node *decl = createNnaryNode(NODECL_VAR, yylineno, $1);
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnaryAddChild(decl, id);
-        
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free($2);
+        /* Inserir a primeira variável declarada */
+        if (current) {
+            int r = insert_variable(
+                current,
+                $2,
+                ($1 == TYINT ? INT_TYPE : CAR_TYPE),
+                declaration_position++
+            );
+            if (r != 0) {
+                fprintf(stderr,
+                        "Erro semântico: identificador '%s' já declarado (linha %d).\n",
+                        $2, yylineno);
+                error = 1;
+            }
+        }
 
-        /* Adiciona ids separados por vírgula */
+        /* Adicionar variáveis que vieram em DeclVar (após vírgulas) */
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
+
             while (child) {
                 Node *next = child->next;
+
+                child->type = $1;
+
+                if (current && child->data.leaf.lexeme) {
+                    insert_variable(
+                        current,
+                        child->data.leaf.lexeme,
+                        ($1 == TYINT ? INT_TYPE : CAR_TYPE),
+                        declaration_position++
+                    );
+                }
+
                 nnaryAddChild(decl, child);
                 child = next;
             }
         }
-        /* Libera o container de IDs DeclVar ($3) se ele existe */
-        if ($3) free($3);
 
-
-        /* $5 é a ListaDeclVar recursiva (à direita) */
+        /* Acumular no nó recursivo */
         Node *acc = $5 ? $5 : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+
         nnaryAddChild(acc, decl);
 
         $$ = acc;
     }
 ;
+
 
 
 Tipo:
@@ -321,9 +399,7 @@ Comando:
 
     | TREAD TID_TOKEN TSEMICOLON
         {
-            Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $2, 0, 0);
-            /* CORREÇÃO 4: Libera o lexema $2 */
-            free($2);
+            Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $2, 0, 0);            
             $$ = createUnaryNode(NOREAD, yylineno, TYVOID, id);
         }
 
@@ -332,9 +408,7 @@ Comando:
 
     | TWRITE TSTRING_LITERAL TSEMICOLON
         {
-            Node *str = createLeafNode(NOSTRING_LITERAL, yylineno, TYVOID, $2, 0, 0);
-            /* CORREÇÃO 4: Libera o lexema $2 */
-            free($2);
+            Node *str = createLeafNode(NOSTRING_LITERAL, yylineno, TYVOID, $2, 0, 0);            
             $$ = createUnaryNode(NOWRITE_LITERAL, yylineno, TYVOID, str);
         }
 
@@ -373,11 +447,7 @@ Expr:
         }
     | TID_TOKEN TASSIGN Expr
         {
-            $$ = createBinaryNode(NOATRIBUICAO, yylineno, TYVOID,
-                                     createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0),
-                                     $3);
-            /* CORREÇÃO 4: Libera o lexema $1 */
-            free($1);
+            $$ = createBinaryNode(NOATRIBUICAO, yylineno, TYVOID, createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0), $3);            
         }
 ;
 
@@ -429,10 +499,7 @@ PrimExpr:
     TID_TOKEN TLPAREN ListExpr TRPAREN {
     Node *call = createNnaryNode(NOCHAMADA_FUNCAO, yylineno, TYVOID);
     Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0);
-    nnaryAddChild(call, id);
-    /* CORREÇÃO 4: Libera o lexema $1 */
-    free($1);
-    
+    nnaryAddChild(call, id);    
     if ($3 && $3->data.nnary.first) {
         Node *child = $3->data.nnary.first;
         while (child) {
@@ -441,10 +508,6 @@ PrimExpr:
             child = next;
         }
     }
-
-    /* free do container ListExpr: já movemos os filhos */
-    if ($3) free($3);
-
     $$ = call;
 }
 
@@ -452,16 +515,10 @@ PrimExpr:
         Node *call = createNnaryNode(NOCHAMADA_FUNCAO, yylineno, TYVOID);
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0);
         nnaryAddChild(call, id);
-        
-        /* CORREÇÃO 4: Libera o lexema $1 */
-        free($1);
-
         $$ = call;
       }
     | TID_TOKEN {
-        $$ = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0);
-        /* CORREÇÃO 4: Libera o lexema $1 */
-        free($1);
+        $$ = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0);        
       }
     | TCHAR_CONST {
         $$ = createLeafNode(NOCAR_CONST, yylineno, TYCAR, NULL, 0, $1);
@@ -508,6 +565,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+
     /* preparar tabela de símbolos */
     //SymbolTable *table = NULL;
    // initialize_symbol_table(&table);
@@ -520,6 +578,9 @@ int main(int argc, char **argv) {
 
     /* PARSE */
     // Assumindo que 'root' é uma variável global que recebe o nó raiz da AST
+    initialize_symbol_table(&global);
+    current = global;
+    declaration_position = 0;
     yyparse(); 
     printAST(root, 0);
     fclose(yyin);
@@ -545,8 +606,9 @@ int main(int argc, char **argv) {
 
     /* Liberar recursos SEMPRE */
     // 🌳 Libera a Árvore Sintática Abstrata
+    print_symbol_table(global);
     if (root) {
-        freeAST(root);
+       // freeAST(root);
         root = NULL;
     }
 

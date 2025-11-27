@@ -4,48 +4,90 @@
 #include "structure.h"
 #include "utils/helpers.h"
 
-// Inicializacao da tabela de simbolos.
+/*
+  IMPLEMENTATION.C - tabela de simbolos simplificada (pilha)
+
+  Mudancas principais:
+  - Removida a logica de "next_scope" (lista de filhos/irmaos) na criacao de escopos.
+    Isso evita tentativas de acessar um escopo ja liberado através desse encadeamento.
+  - Mantida a pilha via `before_scope` (ponteiro para o pai).
+  - remove_current_scope() atualiza o ponteiro passado (SymbolTable **) ANTES de liberar
+    o escopo removido.
+  - destroy_symbol_table() foi tornado robusto: procura o topo (se next_scope existir)
+    para permanecer compatível com versões antigas; em seguida libera escopos subindo
+    pela cadeia before_scope (top -> parent -> ... -> NULL).
+  - print_symbol_table: imprime escopos a partir do ESCOP0 for passado. Para imprimir toda
+    a pilha chame print_symbol_table(current) (topo).
+*/
+
+/* Inicializacao da tabela de simbolos. */
 void initialize_symbol_table(SymbolTable **table)
 {
-    *table = helper_malloc(sizeof(SymbolTable), "inicializacao da tabela de simbolos");
-    (*table)->entries = NULL;
-    (*table)->first_entry = NULL;
-    (*table)->last_entry = NULL;
-    (*table)->next_scope = NULL;
-    (*table)->before_scope = NULL;
-    (*table)->level = 0;
+    *table = NULL;
+    create_new_scope(table); // cria escopo 0 automaticamente
 }
-// Criacao de um novo escopo na tabela.
+
+/* Criacao de um novo escopo na tabela. Simplificado: usa apenas before_scope. */
 void create_new_scope(SymbolTable **scope)
 {
+    SymbolTable *parent = *scope; /* guarda o pai atual (pode ser NULL) */
     SymbolTable *new_scope = helper_malloc(sizeof(SymbolTable), "criacao de escopo");
-    new_scope->entries = NULL;
+
+    /* Inicializa entradas */
     new_scope->first_entry = NULL;
     new_scope->last_entry = NULL;
-    new_scope->before_scope = *scope;
-    new_scope->level = (*scope) ? ((*scope)->level + 1) : 0;
+    new_scope->entries = NULL;
+
+    /* Encadeamento de pilha: apenas before_scope */
+    new_scope->before_scope = parent;
+
+    /* Mantemos o campo next_scope presente (compatibilidade de struct),
+       mas NÃO o usamos para encadear filhos. Sempre deixamos NULL.
+       Isso evita acessar nós liberados por esse caminho. */
     new_scope->next_scope = NULL;
-    if (*scope)
-        (*scope)->next_scope = new_scope;
+
+    if (parent != NULL)
+    {
+        new_scope->level = parent->level + 1;
+        /* OBS: removida a logica que alterava parent->next_scope ou
+           percorria filhos. Isso simplifica a estrutura para uma pilha. */
+    }
+    else
+    {
+        new_scope->level = 0;
+    }
+
+    /* novo topo da pilha de escopos */
     *scope = new_scope;
 }
 
-// Remove o escopo atual.
-void remove_current_scope(SymbolTable **scope)
+/* Remove o escopo atual. Atualiza o ponteiro passado ANTES de liberar. */
+void remove_current_scope(SymbolTable **scope_ptr)
 {
-    helper_not_null(scope, "remover o escopo atual.");
-    SymbolTable *current = *scope;
-    SymbolEntry *entry = current->last_entry;
+    if (scope_ptr == NULL || *scope_ptr == NULL)
+    {
+        return; // nada a remover
+    }
 
-    *scope = current->before_scope;
-    if (*scope != NULL)
-        (*scope)->next_scope = NULL;
+    SymbolTable *scope_to_remove = *scope_ptr;
+    SymbolTable *previous_scope = scope_to_remove->before_scope;
 
+    /* Atualiza o ponteiro do chamador para apontar para o escopo anterior
+       ANTES de liberar o escopo que será removido. Isso é crítico para evitar
+       use-after-free quando outro código tentar usar o ponteiro 'current'. */
+    *scope_ptr = previous_scope;
+
+    /* Libera entradas da tabela (SymbolEntry) */
+    SymbolEntry *entry = scope_to_remove->first_entry;
     while (entry != NULL)
     {
-        SymbolEntry *prev = entry->before_symbol;
+        SymbolEntry *next = entry->next_symbol;
+
         if (entry->lexeme.lex)
+        {
             free(entry->lexeme.lex);
+            entry->lexeme.lex = NULL;
+        }
 
         if (entry->entry == FUN_ENTRY && entry->data.fun_data.param_types)
         {
@@ -54,62 +96,76 @@ void remove_current_scope(SymbolTable **scope)
         }
 
         free(entry);
-        entry = prev;
+        entry = next;
     }
-    free(current);
+
+    /* Finalmente libera o próprio escopo */
+    free(scope_to_remove);
 }
 
+/*
+  Destroy: libera toda a tabela de simbolos "da pilha".
+  Estratégia:
+  - Se existir next_scope (por compatibilidade com versões antigas), localiza o
+    topo seguindo next_scope até o fim; caso contrário, assume que o ponteiro
+    fornecido já é o topo possível.
+  - A partir do topo, caminha para cima usando before_scope e vai liberando cada escopo.
+*/
 void destroy_symbol_table(SymbolTable *table)
 {
     if (!table)
         return;
 
-    destroy_symbol_table(table->next_scope);
-
-    SymbolEntry *curr = table->first_entry;
-    while (curr)
+    /* 1) Encontrar o topo (o escopo mais profundo) caso next_scope tenha sido usado */
+    SymbolTable *top = table;
+    while (top->next_scope)
     {
-        SymbolEntry *next = curr->next_symbol;
-        if (curr->lexeme.lex)
-            free(curr->lexeme.lex);
-
-        if (curr->entry == FUN_ENTRY && curr->data.fun_data.param_types)
-        {
-            free(curr->data.fun_data.param_types);
-            curr->data.fun_data.param_types = NULL;
-        }
-
-        free(curr);
-        curr = next;
+        top = top->next_scope;
     }
 
-    free(table);
-}
-
-// Procura um lexema no escopo.
-SymbolEntry *table_search_name_in_scope(SymbolTable *scope, char *name)
-{
-    SymbolTable *current = scope;
-    while (current != NULL)
+    /* 2) Liberar do topo até o root usando before_scope */
+    while (top)
     {
-        SymbolEntry *entry = current->first_entry;
-        while (entry != NULL)
+        SymbolEntry *curr = top->first_entry;
+        while (curr)
         {
-            if (entry->lexeme.lex && name && strcmp(entry->lexeme.lex, name) == 0)
-                return entry;
+            SymbolEntry *next = curr->next_symbol;
+            if (curr->lexeme.lex)
+                free(curr->lexeme.lex);
 
-            entry = entry->next_symbol;
+            if (curr->entry == FUN_ENTRY && curr->data.fun_data.param_types)
+            {
+                free(curr->data.fun_data.param_types);
+                curr->data.fun_data.param_types = NULL;
+            }
+
+            free(curr);
+            curr = next;
         }
-        current = current->before_scope;
+
+        SymbolTable *prev = top->before_scope;
+        free(top);
+        top = prev;
     }
-    return NULL;
 }
 
-// Funcao generica para insercao de simbolos.
-void insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position)
+/* Insercao generica de simbolos: verifica duplicata na pilha inteira (comportamento atual) */
+int insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type,
+                  int num_params, DataType *param_types, int declaration_position)
 {
     helper_not_null(scope, "inserir um novo simbolo");
 
+    //
+    // ✔️ Correção principal: procurar SÓ no escopo atual
+    //
+    SymbolEntry *existing_entry = table_search_name_in_CURRENT_scope(scope, name);
+    if (existing_entry != NULL)
+    {
+        // Já existe algo com esse nome NO MESMO ESCOPO
+        return -1;
+    }
+
+    // Criar nova entrada
     SymbolEntry *new_entry = helper_malloc(sizeof(SymbolEntry), "insercao de simbolo");
     new_entry->lexeme.lex = strdup(name);
     new_entry->type = data_type;
@@ -117,6 +173,7 @@ void insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataTyp
     new_entry->next_symbol = NULL;
     new_entry->before_symbol = scope->last_entry;
 
+    // Inserir na lista de entradas do escopo
     if (!scope->first_entry)
     {
         scope->first_entry = new_entry;
@@ -129,34 +186,43 @@ void insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataTyp
 
     scope->last_entry = new_entry;
 
+    // Configuração adicional para funções
     if (entry_type == FUN_ENTRY)
     {
         new_entry->data.fun_data.count_params = num_params;
         new_entry->data.fun_data.type = data_type;
         new_entry->data.fun_data.param_types = param_types;
     }
-    else
+    else // Variáveis e parâmetros
     {
         new_entry->data.var_info.scope_level = scope->level;
         new_entry->data.var_info.declaration_position = declaration_position;
     }
+
+    return 0;
 }
 
-void insert_function(SymbolTable *scope, char *name, DataType type, int num_params, DataType *param_types)
+int insert_function(SymbolTable *scope, char *name, DataType type, int num_params, DataType *param_types)
 {
-    insert_symbol(scope, name, FUN_ENTRY, type, num_params, param_types, 0);
+    printf(">> INSERINDO '%s' NO ESCOPO %d\n", name, scope->level);
+    return insert_symbol(scope, name, FUN_ENTRY, type, num_params, param_types, 0);
 }
 
-void insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position)
+int insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position)
 {
-    insert_symbol(scope, name, VAR_ENTRY, type, 0, NULL, declaration_position);
+    printf(">> INSERINDO '%s' NO ESCOPO %d\n", name, scope->level);
+
+    printf("[INSERT VAR] name=%s tipo=%d nivel=%d pos=%d\n",
+           name, type, scope->level, declaration_position);
+    return insert_symbol(scope, name, VAR_ENTRY, type, 0, NULL, declaration_position);
 }
 
-void insert_parameter(SymbolTable *scope, char *name, DataType type, int position)
+int insert_parameter(SymbolTable *scope, char *name, DataType type, int position)
 {
-    insert_symbol(scope, name, PARAM_ENTRY, type, 0, NULL, position);
+    return insert_symbol(scope, name, PARAM_ENTRY, type, 0, NULL, position);
 }
-// Impressao dos simbolos por escopo.
+
+/* Impressao de uma entrada */
 void print_symbol_entry(SymbolEntry *entry)
 {
     if (entry == NULL)
@@ -189,28 +255,49 @@ void print_symbol_entry(SymbolEntry *entry)
         }
         printf("\n\n");
     }
-    else if (entry->entry != VAR_ENTRY && entry->entry != PARAM_ENTRY && entry->entry != FUN_ENTRY)
+    else
     {
         printf("Tipo de entrada desconhecido.\n");
         return;
     }
 }
-// Impressao de todos os simbolos
+
+/*
+  Impressao de todos os simbolos a partir DO ESCOPO passado.
+  Observacao: com o modelo de pilha (sem next_scope), para imprimir a pilha inteira
+  chame print_symbol_table(current) onde `current` é o topo da pilha.
+*/
 void print_symbol_table(SymbolTable *table)
 {
     helper_not_null(table, "A tabela esta vazia.");
 
     printf("Inicializacao da impressao da tabela de simbolos.\n");
-    printf("Level da tabela de simbolos e de : %d\n", table->level);
+    printf("Level da tabela de simbolos: %d\n", table->level);
 
-    SymbolEntry *current = table->first_entry;
-    while (current != NULL)
+    SymbolEntry *ent = table->first_entry;
+    while (ent != NULL)
     {
-        print_symbol_entry(current);
-        current = current->next_symbol;
+        print_symbol_entry(ent);
+        ent = ent->next_symbol;
     }
+
+    /* Se por acaso next_scope estiver presente (compatibilidade), mostra também.
+       Normalmente, com a simplificação, next_scope será NULL. */
     if (table->next_scope)
     {
         print_symbol_table(table->next_scope);
     }
+}
+
+SymbolEntry *table_search_name_in_CURRENT_scope(SymbolTable *scope, char *name)
+{
+    SymbolEntry *entry = scope->first_entry;
+    while (entry != NULL)
+    {
+        if (entry->lexeme.lex && name && strcmp(entry->lexeme.lex, name) == 0)
+            return entry;
+
+        entry = entry->next_symbol;
+    }
+    return NULL;
 }

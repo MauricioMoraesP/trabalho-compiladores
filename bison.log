@@ -1,0 +1,5 @@
+syntax/header.y: warning: 25 nonterminals useless in grammar [-Wother]
+syntax/header.y: warning: 63 rules useless in grammar [-Wother]
+syntax/header.y:61.8-15: error: start symbol Programa does not derive any sentence
+   61 | %start Programa
+      |        ^~~~~~~~

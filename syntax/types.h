@@ -48,6 +48,7 @@ typedef enum
     NOLISTA_EXPR,
     NOLISTA_DECL,
     NOFUNC_COMPONENTS,
+    NOLISTA_PARAMS
 } NSpecies;
 
 typedef struct LeafInfo

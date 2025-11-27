@@ -5,14 +5,7 @@
 #include "../symbol_table/utils/helpers.h"
 #include "utils/dictionary/dictionary.h"
 
-/* Helper externo */
-extern void *helper_malloc(size_t size, const char *msg);
-
-/* =====================================================================
-   CREATE LEAF NODE
-   ===================================================================== */
-Node *createLeafNode(NSpecies s, int row, Types type, const char *lexeme,
-                     int int_val, char car_val)
+Node *createLeafNode(NSpecies s, int row, Types type, const char *lexeme, int int_val, char car_val)
 {
     Node *n = helper_malloc(sizeof(Node), "ao criar nó folha");
 
@@ -28,9 +21,6 @@ Node *createLeafNode(NSpecies s, int row, Types type, const char *lexeme,
     return n;
 }
 
-/* =====================================================================
-   CREATE UNARY NODE
-   ===================================================================== */
 Node *createUnaryNode(NSpecies s, int row, Types type, Node *child)
 {
     Node *n = helper_malloc(sizeof(Node), "ao criar nó unário");
@@ -45,9 +35,6 @@ Node *createUnaryNode(NSpecies s, int row, Types type, Node *child)
     return n;
 }
 
-/* =====================================================================
-   CREATE BINARY NODE
-   ===================================================================== */
 Node *createBinaryNode(NSpecies s, int row, Types type,
                        Node *left, Node *right)
 {
@@ -64,11 +51,7 @@ Node *createBinaryNode(NSpecies s, int row, Types type,
     return n;
 }
 
-/* =====================================================================
-   CREATE IF ELSE NODE
-   ===================================================================== */
-Node *createIfElseNode(NSpecies s, int row, Types type,
-                       Node *cond, Node *then_b, Node *else_b)
+Node *createIfElseNode(NSpecies s, int row, Types type, Node *cond, Node *then_b, Node *else_b)
 {
     Node *n = helper_malloc(sizeof(Node), "ao criar nó if-else");
 
@@ -84,13 +67,9 @@ Node *createIfElseNode(NSpecies s, int row, Types type,
     return n;
 }
 
-/* =====================================================================
-   CREATE NNARY NODE
-   ===================================================================== */
 Node *createNnaryNode(NSpecies s, int row, Types type)
 {
     Node *n = helper_malloc(sizeof(Node), "ao criar nó n-nário");
-
     n->species = s;
     n->type = type;
     n->row = row;
@@ -101,9 +80,6 @@ Node *createNnaryNode(NSpecies s, int row, Types type)
     return n;
 }
 
-/* =====================================================================
-   ADD CHILD TO NNARY NODE
-   ===================================================================== */
 void nnaryAddChild(Node *parent, Node *child)
 {
     if (!parent || !child)
@@ -124,9 +100,6 @@ void nnaryAddChild(Node *parent, Node *child)
     child->next = NULL;
 }
 
-/* =====================================================================
-   PRINT HELPERS
-   ===================================================================== */
 static void printIndent(int indent)
 {
     for (int i = 0; i < indent; i++)

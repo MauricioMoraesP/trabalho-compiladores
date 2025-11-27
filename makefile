@@ -28,12 +28,18 @@ OBJ = \
     symbol_table.o
 
 # Compilador e flags
+# CC = gcc
+# CFLAGS = -Wall -Wextra -Wno-unused-result -g \
+#          -fsanitize=address,undefined \
+#          -fno-omit-frame-pointer \
+#          -fstack-protector-strong
+# LDFLAGS = -lfl -fsanitize=address,undefined
+# INCLUDES = -I.
 CC = gcc
 CFLAGS = -Wall -Wextra -Wno-unused-result -g \
-         -fsanitize=address,undefined \
          -fno-omit-frame-pointer \
          -fstack-protector-strong
-LDFLAGS = -lfl -fsanitize=address,undefined
+LDFLAGS = -lfl
 INCLUDES = -I.
 
 # Regra padrão

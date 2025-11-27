@@ -11,6 +11,8 @@
         "semantic.h": "c",
         "string.h": "c",
         "ast.h": "c",
-        "dictionary.h": "c"
+        "dictionary.h": "c",
+        "stdarg.h": "c",
+        "stddef.h": "c"
     }
 }

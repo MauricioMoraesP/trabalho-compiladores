@@ -90,8 +90,12 @@ int yylex();
 void yyerror(const char *s);
 Node* root = NULL;
 int error = 0;
+SymbolTable *global=NULL;
+SymbolTable *current=NULL;
+int declaration_position = 0;
 
-#line 95 "syntax/header.tab.c"
+
+#line 99 "syntax/header.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -166,23 +170,25 @@ enum yysymbol_kind_t
   YYSYMBOL_DeclProg = 44,                  /* DeclProg  */
   YYSYMBOL_DeclVar = 45,                   /* DeclVar  */
   YYSYMBOL_DeclFunc = 46,                  /* DeclFunc  */
-  YYSYMBOL_ListaParametros = 47,           /* ListaParametros  */
-  YYSYMBOL_ListaParametrosCont = 48,       /* ListaParametrosCont  */
-  YYSYMBOL_Bloco = 49,                     /* Bloco  */
-  YYSYMBOL_ListaDeclVar = 50,              /* ListaDeclVar  */
-  YYSYMBOL_Tipo = 51,                      /* Tipo  */
-  YYSYMBOL_ListaComando = 52,              /* ListaComando  */
-  YYSYMBOL_Comando = 53,                   /* Comando  */
-  YYSYMBOL_Expr = 54,                      /* Expr  */
-  YYSYMBOL_OrExpr = 55,                    /* OrExpr  */
-  YYSYMBOL_AndExpr = 56,                   /* AndExpr  */
-  YYSYMBOL_EqExpr = 57,                    /* EqExpr  */
-  YYSYMBOL_DesignExpr = 58,                /* DesignExpr  */
-  YYSYMBOL_AddExpr = 59,                   /* AddExpr  */
-  YYSYMBOL_MulExpr = 60,                   /* MulExpr  */
-  YYSYMBOL_UnExpr = 61,                    /* UnExpr  */
-  YYSYMBOL_PrimExpr = 62,                  /* PrimExpr  */
-  YYSYMBOL_ListExpr = 63                   /* ListExpr  */
+  YYSYMBOL_47_1 = 47,                      /* $@1  */
+  YYSYMBOL_ListaParametros = 48,           /* ListaParametros  */
+  YYSYMBOL_ListaParametrosCont = 49,       /* ListaParametrosCont  */
+  YYSYMBOL_Bloco = 50,                     /* Bloco  */
+  YYSYMBOL_51_2 = 51,                      /* $@2  */
+  YYSYMBOL_ListaDeclVar = 52,              /* ListaDeclVar  */
+  YYSYMBOL_Tipo = 53,                      /* Tipo  */
+  YYSYMBOL_ListaComando = 54,              /* ListaComando  */
+  YYSYMBOL_Comando = 55,                   /* Comando  */
+  YYSYMBOL_Expr = 56,                      /* Expr  */
+  YYSYMBOL_OrExpr = 57,                    /* OrExpr  */
+  YYSYMBOL_AndExpr = 58,                   /* AndExpr  */
+  YYSYMBOL_EqExpr = 59,                    /* EqExpr  */
+  YYSYMBOL_DesignExpr = 60,                /* DesignExpr  */
+  YYSYMBOL_AddExpr = 61,                   /* AddExpr  */
+  YYSYMBOL_MulExpr = 62,                   /* MulExpr  */
+  YYSYMBOL_UnExpr = 63,                    /* UnExpr  */
+  YYSYMBOL_PrimExpr = 64,                  /* PrimExpr  */
+  YYSYMBOL_ListExpr = 65                   /* ListExpr  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -510,16 +516,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  6
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   144
+#define YYLAST   146
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  41
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  23
+#define YYNNTS  25
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  62
+#define YYNRULES  64
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  122
+#define YYNSTATES  124
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   295
@@ -572,13 +578,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    62,    62,    82,   105,   128,   133,   138,   165,   170,
-     186,   190,   197,   205,   216,   250,   254,   287,   288,   292,
-     301,   313,   316,   319,   322,   330,   333,   341,   344,   347,
-     350,   365,   370,   374,   386,   387,   391,   392,   396,   397,
-     398,   402,   403,   404,   405,   406,   410,   411,   412,   416,
-     417,   418,   422,   423,   424,   429,   451,   461,   466,   469,
-     472,   476,   481
+       0,    66,    66,    86,   107,   153,   159,   164,   182,   187,
+     187,   208,   212,   218,   238,   262,   261,   304,   308,   365,
+     366,   370,   379,   391,   394,   397,   400,   406,   409,   415,
+     418,   421,   424,   439,   444,   448,   456,   457,   461,   462,
+     466,   467,   468,   472,   473,   474,   475,   476,   480,   481,
+     482,   486,   487,   488,   492,   493,   494,   499,   514,   520,
+     523,   526,   529,   533,   538
 };
 #endif
 
@@ -601,10 +607,10 @@ static const char *const yytname[] =
   "TDIVIDE", "TASSIGN", "TEQ", "TNEQ", "TLT", "TLEQ", "TGT", "TGEQ",
   "TSEMICOLON", "TLPAREN", "TRPAREN", "TLBRACE", "TRBRACE", "TLBRACKET",
   "TRBRACKET", "TCOMMA", "TOR", "TNEG", "$accept", "Programa",
-  "DeclFuncVar", "DeclProg", "DeclVar", "DeclFunc", "ListaParametros",
-  "ListaParametrosCont", "Bloco", "ListaDeclVar", "Tipo", "ListaComando",
-  "Comando", "Expr", "OrExpr", "AndExpr", "EqExpr", "DesignExpr",
-  "AddExpr", "MulExpr", "UnExpr", "PrimExpr", "ListExpr", YY_NULLPTR
+  "DeclFuncVar", "DeclProg", "DeclVar", "DeclFunc", "$@1",
+  "ListaParametros", "ListaParametrosCont", "Bloco", "$@2", "ListaDeclVar",
+  "Tipo", "ListaComando", "Comando", "Expr", "OrExpr", "AndExpr", "EqExpr",
+  "DesignExpr", "AddExpr", "MulExpr", "UnExpr", "PrimExpr", "ListExpr", YY_NULLPTR
 };
 
 static const char *
@@ -614,7 +620,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-35)
+#define YYPACT_NINF (-40)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -628,19 +634,19 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      37,   -35,   -35,    17,    24,    35,   -35,    -1,   -35,   -25,
-      37,   -35,    37,    44,    20,    37,    47,    53,    34,   -35,
-      66,    46,    37,   -35,    -8,   -35,   -35,    91,    72,    67,
-      49,    57,    59,     5,   -35,    91,     5,   -35,     9,   -35,
-      64,    62,    90,    29,    86,    42,    43,   -35,   -35,    46,
-      -1,    68,   -35,   -35,    91,    87,    93,    94,    95,    99,
-     -35,    91,    91,    85,   -35,    88,   -35,   -35,   -35,   -35,
-      97,    97,    97,    97,    97,    97,    97,    97,    97,    97,
-      97,    97,   105,   -35,    37,   -35,   -35,   -35,    -6,   -35,
-     -35,   -35,   -35,    89,   106,   -35,    90,    29,    86,    86,
-      42,    42,    42,    42,    43,    43,   -35,   -35,    37,   -35,
-     -35,    91,   113,   120,   -35,   -35,    47,    47,   124,   -35,
-      47,   -35
+       0,   -40,   -40,    24,    31,    54,   -40,    40,   -40,   -15,
+     -40,   -40,   -40,    82,    57,     0,     0,     0,    59,     0,
+     -40,    55,   110,    84,   -40,   115,   -40,   -40,   -17,   -40,
+     -40,    50,   116,    41,    89,    90,    91,    27,   -40,    50,
+      27,   -40,     8,   -40,    95,    85,   102,    11,    73,    29,
+      69,   -40,   -40,    59,    40,    92,    50,    72,    96,    97,
+      98,   100,   -40,    50,    50,   103,   -40,    99,   -40,   -40,
+     -40,   -40,    93,    93,    93,    93,    93,    93,    93,    93,
+      93,    93,    93,    93,   105,   -40,     0,   -40,   -40,   -40,
+      -7,   -40,   -40,   -40,   -40,   101,   104,   -40,   102,    11,
+      73,    73,    29,    29,    29,    29,    69,    69,   -40,   -40,
+       0,   -40,   -40,    50,   123,   121,   -40,   -40,    55,    55,
+     124,   -40,    55,   -40
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -648,35 +654,35 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       5,    18,    17,     0,     0,     0,     1,     0,     2,     8,
-      15,     6,    10,     0,     0,     5,     0,     0,     0,    11,
-       0,     8,     5,     4,    57,    59,    58,     0,     0,     0,
-       0,     0,     0,     0,    21,     0,     0,    31,     0,    20,
-       0,    32,    35,    37,    40,    45,    48,    51,    54,     8,
-       0,    12,     7,     3,     0,     0,     0,     0,     0,     0,
-      27,     0,     0,    57,    52,     0,    53,    14,    19,    22,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     9,     0,    33,    56,    61,     0,    23,
-      24,    26,    25,     0,     0,    60,    34,    36,    38,    39,
-      41,    44,    42,    43,    46,    47,    49,    50,    15,    13,
-      55,     0,     0,     0,    16,    62,     0,     0,    28,    30,
-       0,    29
+       5,    20,    19,     0,     0,     0,     1,     0,     2,     8,
+      15,     6,     9,     0,     0,     5,    17,    11,     8,     5,
+       4,     0,     0,     0,    12,     0,     7,     3,    59,    61,
+      60,     0,     0,     0,     0,     0,     0,     0,    23,     0,
+       0,    33,     0,    22,     0,    34,    37,    39,    42,    47,
+      50,    53,    56,     8,     0,    13,     0,     0,     0,     0,
+       0,     0,    29,     0,     0,    59,    54,     0,    55,    16,
+      21,    24,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,    10,     0,    35,    58,    63,
+       0,    25,    26,    28,    27,     0,     0,    62,    36,    38,
+      40,    41,    43,    46,    44,    45,    48,    49,    51,    52,
+      17,    14,    57,     0,     0,     0,    18,    64,     0,     0,
+      30,    32,     0,    31
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -35,   -35,     3,   -35,   -15,   -35,   -35,    60,    -2,    33,
-     -10,   -35,   -34,   -26,   -35,    73,    71,     4,    58,    26,
-      30,     6,   -35
+     -40,   -40,    -3,   -40,   -12,   -40,   -40,   -40,    56,    -2,
+     -40,    33,   -16,   -40,   -39,   -29,   -40,    74,    68,   -11,
+      30,    35,    28,    14,   -40
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     3,     4,     8,    14,    15,    18,    19,    37,    16,
-       5,    38,    39,    40,    41,    42,    43,    44,    45,    46,
-      47,    48,    88
+       0,     3,     4,     8,    14,    15,    17,    23,    24,    41,
+      16,    21,     5,    42,    43,    44,    45,    46,    47,    48,
+      49,    50,    51,    52,    90
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -684,83 +690,83 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      17,    56,    20,    59,    68,    11,    52,    12,    63,    65,
-      25,    26,    24,    13,    25,    26,    54,     6,    23,    27,
-      28,    29,    30,    31,    55,    53,    32,   110,    85,    87,
-      33,     7,   111,    10,    82,    93,    94,    35,     9,    64,
-      34,    35,    66,    10,    67,     1,     2,    21,    83,    36,
-      24,    22,    25,    26,    72,    73,    49,    27,    28,    29,
-      30,    31,    78,    79,    32,    80,    81,    50,    33,    51,
-      24,    58,    25,    26,    20,    57,    98,    99,    34,    35,
-      60,    10,   118,   119,    13,   115,   121,    36,    33,    61,
-      24,    62,    25,    26,    24,    69,    25,    26,    17,    35,
-      63,    70,    25,    26,   104,   105,    84,    36,    33,    71,
-     106,   107,    33,    74,    75,    76,    77,    55,    33,    35,
-      86,    95,   112,    35,    89,    90,    91,    36,   116,    35,
-      92,    36,   100,   101,   102,   103,   108,    36,   117,   113,
-     120,   114,    97,    96,   109
+      22,    25,    58,    70,    61,    11,    26,    56,     1,     2,
+      67,    28,    20,    29,    30,    57,    27,    12,    31,    32,
+      33,    34,    35,    13,     6,    36,   112,    87,    89,    37,
+      65,   113,    29,    30,    95,    96,    74,    75,     7,    38,
+      39,    84,    10,    69,    28,    60,    29,    30,    40,    80,
+      81,    66,    85,    28,    68,    29,    30,     9,    28,    39,
+      29,    30,    37,   100,   101,    31,    32,    33,    34,    35,
+      25,    37,    36,    39,    10,    28,    37,    29,    30,   120,
+     121,    40,    39,   123,   117,    18,    38,    39,    19,    10,
+      40,    82,    83,    37,    22,    40,    65,    13,    29,    30,
+      76,    77,    78,    79,    39,    88,   102,   103,   104,   105,
+     108,   109,    40,    53,    37,   106,   107,    54,    55,    59,
+      62,    73,    63,    64,    72,    39,    71,    91,    92,    93,
+      86,    94,    97,    40,   114,    57,   110,   115,   118,   119,
+     122,    99,   111,   116,     0,     0,    98
 };
 
 static const yytype_int8 yycheck[] =
 {
-      10,    27,    12,    29,    38,     7,    21,    32,     3,    35,
-       5,     6,     3,    38,     5,     6,    24,     0,    15,    10,
-      11,    12,    13,    14,    32,    22,    17,    33,    54,    55,
-      21,     7,    38,    34,    49,    61,    62,    32,     3,    33,
-      31,    32,    36,    34,    35,     8,     9,     3,    50,    40,
-       3,    31,     5,     6,    25,    26,     3,    10,    11,    12,
-      13,    14,    20,    21,    17,    22,    23,    33,    21,     3,
-       3,     4,     5,     6,    84,     3,    72,    73,    31,    32,
-      31,    34,   116,   117,    38,   111,   120,    40,    21,    32,
-       3,    32,     5,     6,     3,    31,     5,     6,   108,    32,
-       3,    39,     5,     6,    78,    79,    38,    40,    21,    19,
-      80,    81,    21,    27,    28,    29,    30,    32,    21,    32,
-      33,    33,    33,    32,    31,    31,    31,    40,    15,    32,
-      31,    40,    74,    75,    76,    77,    31,    40,    18,    33,
-      16,   108,    71,    70,    84
+      16,    17,    31,    42,    33,     7,    18,    24,     8,     9,
+      39,     3,    15,     5,     6,    32,    19,    32,    10,    11,
+      12,    13,    14,    38,     0,    17,    33,    56,    57,    21,
+       3,    38,     5,     6,    63,    64,    25,    26,     7,    31,
+      32,    53,    34,    35,     3,     4,     5,     6,    40,    20,
+      21,    37,    54,     3,    40,     5,     6,     3,     3,    32,
+       5,     6,    21,    74,    75,    10,    11,    12,    13,    14,
+      86,    21,    17,    32,    34,     3,    21,     5,     6,   118,
+     119,    40,    32,   122,   113,     3,    31,    32,    31,    34,
+      40,    22,    23,    21,   110,    40,     3,    38,     5,     6,
+      27,    28,    29,    30,    32,    33,    76,    77,    78,    79,
+      82,    83,    40,     3,    21,    80,    81,    33,     3,     3,
+      31,    19,    32,    32,    39,    32,    31,    31,    31,    31,
+      38,    31,    33,    40,    33,    32,    31,    33,    15,    18,
+      16,    73,    86,   110,    -1,    -1,    72
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     8,     9,    42,    43,    51,     0,     7,    44,     3,
-      34,    49,    32,    38,    45,    46,    50,    51,    47,    48,
-      51,     3,    31,    43,     3,     5,     6,    10,    11,    12,
-      13,    14,    17,    21,    31,    32,    40,    49,    52,    53,
-      54,    55,    56,    57,    58,    59,    60,    61,    62,     3,
-      33,     3,    45,    43,    24,    32,    54,     3,     4,    54,
-      31,    32,    32,     3,    62,    54,    62,    35,    53,    31,
-      39,    19,    25,    26,    27,    28,    29,    30,    20,    21,
-      22,    23,    45,    49,    38,    54,    33,    54,    63,    31,
-      31,    31,    31,    54,    54,    33,    56,    57,    58,    58,
-      59,    59,    59,    59,    60,    60,    61,    61,    31,    48,
-      33,    38,    33,    33,    50,    54,    15,    18,    53,    53,
-      16,    53
+       0,     8,     9,    42,    43,    53,     0,     7,    44,     3,
+      34,    50,    32,    38,    45,    46,    51,    47,     3,    31,
+      43,    52,    53,    48,    49,    53,    45,    43,     3,     5,
+       6,    10,    11,    12,    13,    14,    17,    21,    31,    32,
+      40,    50,    54,    55,    56,    57,    58,    59,    60,    61,
+      62,    63,    64,     3,    33,     3,    24,    32,    56,     3,
+       4,    56,    31,    32,    32,     3,    64,    56,    64,    35,
+      55,    31,    39,    19,    25,    26,    27,    28,    29,    30,
+      20,    21,    22,    23,    45,    50,    38,    56,    33,    56,
+      65,    31,    31,    31,    31,    56,    56,    33,    58,    59,
+      60,    60,    61,    61,    61,    61,    62,    62,    63,    63,
+      31,    49,    33,    38,    33,    33,    52,    56,    15,    18,
+      55,    55,    16,    55
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    41,    42,    43,    43,    43,    44,    45,    45,    46,
-      47,    47,    48,    48,    49,    50,    50,    51,    51,    52,
-      52,    53,    53,    53,    53,    53,    53,    53,    53,    53,
-      53,    53,    54,    54,    55,    55,    56,    56,    57,    57,
-      57,    58,    58,    58,    58,    58,    59,    59,    59,    60,
-      60,    60,    61,    61,    61,    62,    62,    62,    62,    62,
-      62,    63,    63
+       0,    41,    42,    43,    43,    43,    44,    45,    45,    47,
+      46,    48,    48,    49,    49,    51,    50,    52,    52,    53,
+      53,    54,    54,    55,    55,    55,    55,    55,    55,    55,
+      55,    55,    55,    55,    56,    56,    57,    57,    58,    58,
+      59,    59,    59,    60,    60,    60,    60,    60,    61,    61,
+      61,    62,    62,    62,    63,    63,    63,    64,    64,    64,
+      64,    64,    64,    65,    65
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     2,     5,     4,     0,     2,     3,     0,     4,
-       0,     1,     2,     4,     4,     0,     5,     1,     1,     2,
-       1,     1,     2,     3,     3,     3,     3,     2,     6,     8,
-       6,     1,     1,     3,     3,     1,     3,     1,     3,     3,
-       1,     3,     3,     3,     3,     1,     3,     3,     1,     3,
-       3,     1,     2,     2,     1,     4,     3,     1,     1,     1,
-       3,     1,     3
+       0,     2,     2,     5,     4,     0,     2,     3,     0,     0,
+       5,     0,     1,     2,     4,     0,     5,     0,     5,     1,
+       1,     2,     1,     1,     2,     3,     3,     3,     3,     2,
+       6,     8,     6,     1,     1,     3,     3,     1,     3,     1,
+       3,     3,     1,     3,     3,     3,     3,     1,     3,     3,
+       1,     3,     3,     1,     2,     2,     1,     4,     3,     1,
+       1,     1,     3,     1,     3
 };
 
 
@@ -1224,9 +1230,10 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* Programa: DeclFuncVar DeclProg  */
-#line 62 "syntax/header.y"
+#line 66 "syntax/header.y"
                          {
         Node *program = createNnaryNode(NOPROGRAMA, yylineno, TYVOID);
+
         if ((yyvsp[-1].n) && (yyvsp[-1].n)->data.nnary.first) {
             Node *child = (yyvsp[-1].n)->data.nnary.first;
             while (child) {
@@ -1235,22 +1242,23 @@ yyreduce:
                 child = next;
             }
         }
-        if ((yyvsp[-1].n)) free((yyvsp[-1].n));
 
         if ((yyvsp[0].n))
             nnaryAddChild(program, (yyvsp[0].n));
         (yyval.n) = program;
         root = program;
     }
-#line 1246 "syntax/header.tab.c"
+#line 1252 "syntax/header.tab.c"
     break;
 
   case 3: /* DeclFuncVar: Tipo TID_TOKEN DeclVar TSEMICOLON DeclFuncVar  */
-#line 82 "syntax/header.y"
+#line 86 "syntax/header.y"
                                                   {
         Node *decl = createNnaryNode(NODECL_VAR, yylineno, (yyvsp[-4].type));
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, (yyvsp[-4].type), (yyvsp[-3].str), 0, 0);
         nnaryAddChild(decl, id);
+        insert_variable(current, (yyvsp[-3].str), (yyvsp[-4].type), declaration_position);
+
 
         /* se houver lista de identificadores vindos de DeclVar, movê-los com segurança */
         if ((yyvsp[-2].n) && (yyvsp[-2].n)->data.nnary.first) {
@@ -1261,70 +1269,85 @@ yyreduce:
                 child = next;
             }
         }
-        /* CORREÇÃO 1: Libera o nó container $3 (DeclVar) */
-        if ((yyvsp[-2].n)) free((yyvsp[-2].n));
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free((yyvsp[-3].str));
 
         Node *list = ((yyvsp[0].n) ? (yyvsp[0].n) : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID));
         nnaryAddChild(list, decl);
         (yyval.n) = list;
     }
-#line 1274 "syntax/header.tab.c"
+#line 1278 "syntax/header.tab.c"
     break;
 
   case 4: /* DeclFuncVar: Tipo TID_TOKEN DeclFunc DeclFuncVar  */
-#line 105 "syntax/header.y"
-                                          {
+#line 107 "syntax/header.y"
+                                             {
+        /* Inserir função no escopo global com tipos de parametro */
         Node *func = createNnaryNode(NODECL_FUNCAO, yylineno, (yyvsp[-3].type));
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, (yyvsp[-3].type), (yyvsp[-2].str), 0, 0);
-
         nnaryAddChild(func, id);
-        
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free((yyvsp[-2].str));
 
-        Node *child = (yyvsp[-1].n)->data.nnary.first;
-        while (child) {
-            Node *next = child->next;
-            nnaryAddChild(func, child);
-            child = next;
+        /* extrair lista de parametros do $3 (DeclFunc -> wrap: params, bloco) */
+        Node *params_node = NULL;
+        if ((yyvsp[-1].n) && (yyvsp[-1].n)->data.nnary.first) {
+            params_node = (yyvsp[-1].n)->data.nnary.first; /* primeiro filho é ListaParametros */
+        }
+        int num_params = 0;
+        DataType *param_types = NULL;
+        if (params_node && params_node->data.nnary.first) {
+            Node *p = params_node->data.nnary.first;
+            while (p) { num_params++; p = p->next; }
+            param_types = malloc(sizeof(DataType) * num_params);
+            int i = 0;
+            p = params_node->data.nnary.first;
+            while (p) {
+                param_types[i++] = (p->type == TYINT ? INT_TYPE : CAR_TYPE);
+                p = p->next;
+            }
+        }
+        if (global) {
+            insert_function(global, (yyvsp[-2].str),
+                ((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),
+                num_params, param_types);
+        } else {
+            insert_function(current ? current : global, (yyvsp[-2].str),
+                ((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),
+                num_params, param_types);
         }
 
-        /* CORREÇÃO 2: Libera o nó container $3 (DeclFunc/NOFUNC_COMPONENTS) */
-        if ((yyvsp[-1].n)) free((yyvsp[-1].n));
-
+        if ((yyvsp[-1].n) && (yyvsp[-1].n)->data.nnary.first) {
+            Node *child = (yyvsp[-1].n)->data.nnary.first;
+            while (child) {
+                Node *next = child->next;
+                nnaryAddChild(func, child);
+                child = next;
+            }
+        }
         Node *list = (yyvsp[0].n) ? (yyvsp[0].n) : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
         nnaryAddChild(list, func);
         (yyval.n) = list;
     }
-#line 1302 "syntax/header.tab.c"
+#line 1329 "syntax/header.tab.c"
     break;
 
   case 5: /* DeclFuncVar: %empty  */
-#line 128 "syntax/header.y"
-             { (yyval.n) = NULL; }
-#line 1308 "syntax/header.tab.c"
+#line 153 "syntax/header.y"
+              { (yyval.n) = NULL; }
+#line 1335 "syntax/header.tab.c"
     break;
 
   case 6: /* DeclProg: TPROGRAM Bloco  */
-#line 133 "syntax/header.y"
+#line 159 "syntax/header.y"
                    { (yyval.n) = (yyvsp[0].n); }
-#line 1314 "syntax/header.tab.c"
+#line 1341 "syntax/header.tab.c"
     break;
 
   case 7: /* DeclVar: TCOMMA TID_TOKEN DeclVar  */
-#line 138 "syntax/header.y"
+#line 164 "syntax/header.y"
                              {
         Node *id_node = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free((yyvsp[-1].str));
-
         /* criar nova lista com o id atual em primeiro */
         Node *list = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
         nnaryAddChild(list, id_node);
 
-        /* anexar (mover) os filhos de $3, se existirem, após o id atual */
         if ((yyvsp[0].n) && (yyvsp[0].n)->data.nnary.first) {
             Node *child = (yyvsp[0].n)->data.nnary.first;
             while (child) {
@@ -1335,86 +1358,124 @@ yyreduce:
                 child = next;
             }
         }
-
-        /* liberar o container antigo para evitar vazamento */
-        if ((yyvsp[0].n))
-            free((yyvsp[0].n));
-
         (yyval.n) = list;
     }
-#line 1346 "syntax/header.tab.c"
+#line 1364 "syntax/header.tab.c"
     break;
 
   case 8: /* DeclVar: %empty  */
-#line 165 "syntax/header.y"
+#line 182 "syntax/header.y"
              { (yyval.n) = NULL; }
-#line 1352 "syntax/header.tab.c"
+#line 1370 "syntax/header.tab.c"
     break;
 
-  case 9: /* DeclFunc: TLPAREN ListaParametros TRPAREN Bloco  */
-#line 170 "syntax/header.y"
-                                          { 
+  case 9: /* $@1: %empty  */
+#line 187 "syntax/header.y"
+            { create_new_scope(&current); declaration_position = 0; }
+#line 1376 "syntax/header.tab.c"
+    break;
+
+  case 10: /* DeclFunc: TLPAREN $@1 ListaParametros TRPAREN Bloco  */
+#line 189 "syntax/header.y"
+    { 
         Node *wrap = createNnaryNode(NOFUNC_COMPONENTS, yylineno, TYVOID);
         
-        Node *params = (yyvsp[-2].n); 
-        if (!params) {
-             params = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
-        }
-        
+        Node *params = (yyvsp[-2].n);   // ✔ correto
+        if (!params)
+            params = createNnaryNode(NOLISTA_PARAMS, yylineno, TYVOID);
+
         nnaryAddChild(wrap, params);
-        nnaryAddChild(wrap, (yyvsp[0].n));
+        nnaryAddChild(wrap, (yyvsp[0].n));  // ✔ correto
+
+        remove_current_scope(&current);
         (yyval.n) = wrap;
     }
-#line 1369 "syntax/header.tab.c"
+#line 1394 "syntax/header.tab.c"
     break;
 
-  case 10: /* ListaParametros: %empty  */
-#line 186 "syntax/header.y"
+  case 11: /* ListaParametros: %empty  */
+#line 208 "syntax/header.y"
             {
-         (yyval.n) = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+         (yyval.n) = createNnaryNode(NOLISTA_PARAMS, yylineno, TYVOID);
      }
-#line 1377 "syntax/header.tab.c"
+#line 1402 "syntax/header.tab.c"
     break;
 
-  case 11: /* ListaParametros: ListaParametrosCont  */
-#line 190 "syntax/header.y"
+  case 12: /* ListaParametros: ListaParametrosCont  */
+#line 212 "syntax/header.y"
                          {
          (yyval.n) = (yyvsp[0].n);
      }
-#line 1385 "syntax/header.tab.c"
+#line 1410 "syntax/header.tab.c"
     break;
 
-  case 12: /* ListaParametrosCont: Tipo TID_TOKEN  */
-#line 197 "syntax/header.y"
+  case 13: /* ListaParametrosCont: Tipo TID_TOKEN  */
+#line 218 "syntax/header.y"
                     {
-         Node *list = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+         Node *list = createNnaryNode(NOLISTA_PARAMS, yylineno, TYVOID);
+
          Node *param = createLeafNode(NOIDENTIFICADOR, yylineno, (yyvsp[-1].type), (yyvsp[0].str), 0, 0);
          nnaryAddChild(list, param);
-         /* CORREÇÃO 4: Libera o lexema $2 */
-         free((yyvsp[0].str));
+
+         if (current) {
+             int r = insert_parameter(current, (yyvsp[0].str),
+                 ((yyvsp[-1].type) == TYINT ? INT_TYPE : CAR_TYPE),
+                 declaration_position++);
+             if (r != 0) {
+                 fprintf(stderr,
+                     "Erro semântico: parametro '%s' já declarado (linha %d).\n",
+                     (yyvsp[0].str), yylineno);
+                 error = 1;
+             }
+         }
+
          (yyval.n) = list;
      }
-#line 1398 "syntax/header.tab.c"
+#line 1435 "syntax/header.tab.c"
     break;
 
-  case 13: /* ListaParametrosCont: Tipo TID_TOKEN TCOMMA ListaParametrosCont  */
-#line 205 "syntax/header.y"
+  case 14: /* ListaParametrosCont: Tipo TID_TOKEN TCOMMA ListaParametrosCont  */
+#line 238 "syntax/header.y"
                                                 {
-         Node *list = (yyvsp[0].n) ? (yyvsp[0].n) : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+
+         Node *list = (yyvsp[0].n);
          Node *param = createLeafNode(NOIDENTIFICADOR, yylineno, (yyvsp[-3].type), (yyvsp[-2].str), 0, 0);
          nnaryAddChild(list, param);
-         /* CORREÇÃO 4: Libera o lexema $2 */
-         free((yyvsp[-2].str));
+
+         if (current) {
+             int r = insert_parameter(current, (yyvsp[-2].str),
+                 ((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),
+                 declaration_position++);
+             if (r != 0) {
+                 fprintf(stderr,
+                     "Erro semântico: parametro '%s' já declarado (linha %d).\n",
+                     (yyvsp[-2].str), yylineno);
+                 error = 1;
+             }
+         }
+
          (yyval.n) = list;
      }
-#line 1411 "syntax/header.tab.c"
+#line 1460 "syntax/header.tab.c"
     break;
 
-  case 14: /* Bloco: TLBRACE ListaDeclVar ListaComando TRBRACE  */
-#line 216 "syntax/header.y"
-                                              {
+  case 15: /* $@2: %empty  */
+#line 262 "syntax/header.y"
+    {
+        create_new_scope(&current);
+        declaration_position = 0;
+
+    }
+#line 1470 "syntax/header.tab.c"
+    break;
+
+  case 16: /* Bloco: TLBRACE $@2 ListaDeclVar ListaComando TRBRACE  */
+#line 270 "syntax/header.y"
+    {
+        remove_current_scope(&current);
         Node *bloco = createNnaryNode(NOBLOCO, yylineno, TYVOID);
-        /* ------ Mover declarações ($2) ------ */
+
+        /* $3 = ListaDeclVar */
         if ((yyvsp[-2].n)) {
             Node *child = (yyvsp[-2].n)->data.nnary.first;
             while (child) {
@@ -1423,11 +1484,9 @@ yyreduce:
                 nnaryAddChild(bloco, child);
                 child = next;
             }
-            free((yyvsp[-2].n));   /* libera o contêiner */
-            (yyvsp[-2].n) = NULL;
         }
 
-        /* ------ Mover comandos ($3) ------ */
+        /* $4 = ListaComando */
         if ((yyvsp[-1].n)) {
             Node *child = (yyvsp[-1].n)->data.nnary.first;
             while (child) {
@@ -1436,70 +1495,91 @@ yyreduce:
                 nnaryAddChild(bloco, child);
                 child = next;
             }
-            free((yyvsp[-1].n));  
-            (yyvsp[-1].n) = NULL;
         }
+
         (yyval.n) = bloco;
     }
-#line 1445 "syntax/header.tab.c"
+#line 1503 "syntax/header.tab.c"
     break;
 
-  case 15: /* ListaDeclVar: %empty  */
-#line 250 "syntax/header.y"
+  case 17: /* ListaDeclVar: %empty  */
+#line 304 "syntax/header.y"
            {
         (yyval.n) = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
     }
-#line 1453 "syntax/header.tab.c"
+#line 1511 "syntax/header.tab.c"
     break;
 
-  case 16: /* ListaDeclVar: Tipo TID_TOKEN DeclVar TSEMICOLON ListaDeclVar  */
-#line 254 "syntax/header.y"
-                                                   {
-
-        /* Declaração individual */
+  case 18: /* ListaDeclVar: Tipo TID_TOKEN DeclVar TSEMICOLON ListaDeclVar  */
+#line 309 "syntax/header.y"
+    {
+        /* Criar declaração individual */
         Node *decl = createNnaryNode(NODECL_VAR, yylineno, (yyvsp[-4].type));
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, (yyvsp[-4].type), (yyvsp[-3].str), 0, 0);
         nnaryAddChild(decl, id);
-        
-        /* CORREÇÃO 4: Libera o lexema $2 */
-        free((yyvsp[-3].str));
+        /* Inserir a primeira variável declarada */
+        if (current) {
+            int r = insert_variable(
+                current,
+                (yyvsp[-3].str),
+                ((yyvsp[-4].type) == TYINT ? INT_TYPE : CAR_TYPE),
+                declaration_position++
+            );
+            if (r != 0) {
+                fprintf(stderr,
+                        "Erro semântico: identificador '%s' já declarado (linha %d).\n",
+                        (yyvsp[-3].str), yylineno);
+                error = 1;
+            }
+        }
 
-        /* Adiciona ids separados por vírgula */
+        /* Adicionar variáveis que vieram em DeclVar (após vírgulas) */
         if ((yyvsp[-2].n) && (yyvsp[-2].n)->data.nnary.first) {
             Node *child = (yyvsp[-2].n)->data.nnary.first;
+
             while (child) {
                 Node *next = child->next;
+
+                child->type = (yyvsp[-4].type);
+
+                if (current && child->data.leaf.lexeme) {
+                    insert_variable(
+                        current,
+                        child->data.leaf.lexeme,
+                        ((yyvsp[-4].type) == TYINT ? INT_TYPE : CAR_TYPE),
+                        declaration_position++
+                    );
+                }
+
                 nnaryAddChild(decl, child);
                 child = next;
             }
         }
-        /* Libera o container de IDs DeclVar ($3) se ele existe */
-        if ((yyvsp[-2].n)) free((yyvsp[-2].n));
 
-
-        /* $5 é a ListaDeclVar recursiva (à direita) */
+        /* Acumular no nó recursivo */
         Node *acc = (yyvsp[0].n) ? (yyvsp[0].n) : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
+
         nnaryAddChild(acc, decl);
 
         (yyval.n) = acc;
     }
-#line 1487 "syntax/header.tab.c"
+#line 1567 "syntax/header.tab.c"
     break;
 
-  case 17: /* Tipo: TINT  */
-#line 287 "syntax/header.y"
+  case 19: /* Tipo: TINT  */
+#line 365 "syntax/header.y"
          { (yyval.type) = TYINT; }
-#line 1493 "syntax/header.tab.c"
+#line 1573 "syntax/header.tab.c"
     break;
 
-  case 18: /* Tipo: TCAR  */
-#line 288 "syntax/header.y"
+  case 20: /* Tipo: TCAR  */
+#line 366 "syntax/header.y"
            { (yyval.type) = TYCAR; }
-#line 1499 "syntax/header.tab.c"
+#line 1579 "syntax/header.tab.c"
     break;
 
-  case 19: /* ListaComando: ListaComando Comando  */
-#line 292 "syntax/header.y"
+  case 21: /* ListaComando: ListaComando Comando  */
+#line 370 "syntax/header.y"
                          {
         if ((yyvsp[0].n) == NULL) { (yyval.n) = (yyvsp[-1].n); } 
         else if ((yyvsp[-1].n) != NULL) { nnaryAddChild((yyvsp[-1].n), (yyvsp[0].n)); (yyval.n) = (yyvsp[-1].n); } 
@@ -1509,11 +1589,11 @@ yyreduce:
             (yyval.n) = l; 
         }
     }
-#line 1513 "syntax/header.tab.c"
+#line 1593 "syntax/header.tab.c"
     break;
 
-  case 20: /* ListaComando: Comando  */
-#line 301 "syntax/header.y"
+  case 22: /* ListaComando: Comando  */
+#line 379 "syntax/header.y"
               {
         if ((yyvsp[0].n) != NULL) { 
             Node *l = createNnaryNode(NOLISTA_COMANDOS, yylineno, TYVOID); 
@@ -1522,75 +1602,71 @@ yyreduce:
         }
         else { (yyval.n) = NULL; } // Comando nulo, retorna NULL. OK.
     }
-#line 1526 "syntax/header.tab.c"
+#line 1606 "syntax/header.tab.c"
     break;
 
-  case 21: /* Comando: TSEMICOLON  */
-#line 314 "syntax/header.y"
+  case 23: /* Comando: TSEMICOLON  */
+#line 392 "syntax/header.y"
         { (yyval.n) = NULL; }
-#line 1532 "syntax/header.tab.c"
+#line 1612 "syntax/header.tab.c"
     break;
 
-  case 22: /* Comando: Expr TSEMICOLON  */
-#line 317 "syntax/header.y"
+  case 24: /* Comando: Expr TSEMICOLON  */
+#line 395 "syntax/header.y"
         { (yyval.n) = (yyvsp[-1].n); }
-#line 1538 "syntax/header.tab.c"
+#line 1618 "syntax/header.tab.c"
     break;
 
-  case 23: /* Comando: TRETURN Expr TSEMICOLON  */
-#line 320 "syntax/header.y"
+  case 25: /* Comando: TRETURN Expr TSEMICOLON  */
+#line 398 "syntax/header.y"
         { (yyval.n) = createUnaryNode(NORETURN, yylineno, TYVOID, (yyvsp[-1].n)); }
-#line 1544 "syntax/header.tab.c"
+#line 1624 "syntax/header.tab.c"
     break;
 
-  case 24: /* Comando: TREAD TID_TOKEN TSEMICOLON  */
-#line 323 "syntax/header.y"
+  case 26: /* Comando: TREAD TID_TOKEN TSEMICOLON  */
+#line 401 "syntax/header.y"
         {
-            Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);
-            /* CORREÇÃO 4: Libera o lexema $2 */
-            free((yyvsp[-1].str));
+            Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);            
             (yyval.n) = createUnaryNode(NOREAD, yylineno, TYVOID, id);
         }
-#line 1555 "syntax/header.tab.c"
+#line 1633 "syntax/header.tab.c"
     break;
 
-  case 25: /* Comando: TWRITE Expr TSEMICOLON  */
-#line 331 "syntax/header.y"
+  case 27: /* Comando: TWRITE Expr TSEMICOLON  */
+#line 407 "syntax/header.y"
         { (yyval.n) = createUnaryNode(NOWRITE, yylineno, TYVOID, (yyvsp[-1].n)); }
-#line 1561 "syntax/header.tab.c"
+#line 1639 "syntax/header.tab.c"
     break;
 
-  case 26: /* Comando: TWRITE TSTRING_LITERAL TSEMICOLON  */
-#line 334 "syntax/header.y"
+  case 28: /* Comando: TWRITE TSTRING_LITERAL TSEMICOLON  */
+#line 410 "syntax/header.y"
         {
-            Node *str = createLeafNode(NOSTRING_LITERAL, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);
-            /* CORREÇÃO 4: Libera o lexema $2 */
-            free((yyvsp[-1].str));
+            Node *str = createLeafNode(NOSTRING_LITERAL, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);            
             (yyval.n) = createUnaryNode(NOWRITE_LITERAL, yylineno, TYVOID, str);
         }
-#line 1572 "syntax/header.tab.c"
+#line 1648 "syntax/header.tab.c"
     break;
 
-  case 27: /* Comando: TNEWLINE TSEMICOLON  */
-#line 342 "syntax/header.y"
+  case 29: /* Comando: TNEWLINE TSEMICOLON  */
+#line 416 "syntax/header.y"
         { (yyval.n) = createNnaryNode(NONEWLINE, yylineno, TYVOID); }
-#line 1578 "syntax/header.tab.c"
+#line 1654 "syntax/header.tab.c"
     break;
 
-  case 28: /* Comando: TIF TLPAREN Expr TRPAREN TTHEN Comando  */
-#line 345 "syntax/header.y"
+  case 30: /* Comando: TIF TLPAREN Expr TRPAREN TTHEN Comando  */
+#line 419 "syntax/header.y"
         { (yyval.n) = createBinaryNode(NOIF, yylineno, TYVOID, (yyvsp[-3].n), (yyvsp[0].n)); }
-#line 1584 "syntax/header.tab.c"
+#line 1660 "syntax/header.tab.c"
     break;
 
-  case 29: /* Comando: TIF TLPAREN Expr TRPAREN TTHEN Comando TELSE Comando  */
-#line 348 "syntax/header.y"
+  case 31: /* Comando: TIF TLPAREN Expr TRPAREN TTHEN Comando TELSE Comando  */
+#line 422 "syntax/header.y"
         { (yyval.n) = createIfElseNode(NOIF_ELSE, yylineno, TYVOID, (yyvsp[-5].n), (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1590 "syntax/header.tab.c"
+#line 1666 "syntax/header.tab.c"
     break;
 
-  case 30: /* Comando: TWHILE TLPAREN Expr TRPAREN TEXECUTE Comando  */
-#line 351 "syntax/header.y"
+  case 32: /* Comando: TWHILE TLPAREN Expr TRPAREN TEXECUTE Comando  */
+#line 425 "syntax/header.y"
 {
         Node *body;
 
@@ -1603,170 +1679,163 @@ yyreduce:
 
         (yyval.n) = createBinaryNode(NOWHILE, yylineno, TYVOID, (yyvsp[-3].n), body);
     }
-#line 1607 "syntax/header.tab.c"
+#line 1683 "syntax/header.tab.c"
     break;
 
-  case 31: /* Comando: Bloco  */
-#line 366 "syntax/header.y"
+  case 33: /* Comando: Bloco  */
+#line 440 "syntax/header.y"
         { (yyval.n) = (yyvsp[0].n); }
-#line 1613 "syntax/header.tab.c"
+#line 1689 "syntax/header.tab.c"
     break;
 
-  case 32: /* Expr: OrExpr  */
-#line 371 "syntax/header.y"
+  case 34: /* Expr: OrExpr  */
+#line 445 "syntax/header.y"
         {
             (yyval.n) = (yyvsp[0].n);
         }
-#line 1621 "syntax/header.tab.c"
+#line 1697 "syntax/header.tab.c"
     break;
 
-  case 33: /* Expr: TID_TOKEN TASSIGN Expr  */
-#line 375 "syntax/header.y"
+  case 35: /* Expr: TID_TOKEN TASSIGN Expr  */
+#line 449 "syntax/header.y"
         {
-            (yyval.n) = createBinaryNode(NOATRIBUICAO, yylineno, TYVOID,
-                                     createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-2].str), 0, 0),
-                                     (yyvsp[0].n));
-            /* CORREÇÃO 4: Libera o lexema $1 */
-            free((yyvsp[-2].str));
+            (yyval.n) = createBinaryNode(NOATRIBUICAO, yylineno, TYVOID, createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-2].str), 0, 0), (yyvsp[0].n));            
         }
-#line 1633 "syntax/header.tab.c"
-    break;
-
-  case 34: /* OrExpr: OrExpr TOR AndExpr  */
-#line 386 "syntax/header.y"
-                       { (yyval.n) = createBinaryNode(NOOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1639 "syntax/header.tab.c"
-    break;
-
-  case 35: /* OrExpr: AndExpr  */
-#line 387 "syntax/header.y"
-              { (yyval.n) = (yyvsp[0].n); }
-#line 1645 "syntax/header.tab.c"
-    break;
-
-  case 36: /* AndExpr: AndExpr TAND EqExpr  */
-#line 391 "syntax/header.y"
-                        { (yyval.n) = createBinaryNode(NOAND, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1651 "syntax/header.tab.c"
-    break;
-
-  case 37: /* AndExpr: EqExpr  */
-#line 392 "syntax/header.y"
-             { (yyval.n) = (yyvsp[0].n); }
-#line 1657 "syntax/header.tab.c"
-    break;
-
-  case 38: /* EqExpr: EqExpr TEQ DesignExpr  */
-#line 396 "syntax/header.y"
-                          { (yyval.n) = createBinaryNode(NOIGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1663 "syntax/header.tab.c"
-    break;
-
-  case 39: /* EqExpr: EqExpr TNEQ DesignExpr  */
-#line 397 "syntax/header.y"
-                             { (yyval.n) = createBinaryNode(NODIFERENTE, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1669 "syntax/header.tab.c"
-    break;
-
-  case 40: /* EqExpr: DesignExpr  */
-#line 398 "syntax/header.y"
-                 { (yyval.n) = (yyvsp[0].n); }
-#line 1675 "syntax/header.tab.c"
-    break;
-
-  case 41: /* DesignExpr: DesignExpr TLT AddExpr  */
-#line 402 "syntax/header.y"
-                           { (yyval.n) = createBinaryNode(NOMENOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1681 "syntax/header.tab.c"
-    break;
-
-  case 42: /* DesignExpr: DesignExpr TGT AddExpr  */
-#line 403 "syntax/header.y"
-                             { (yyval.n) = createBinaryNode(NOMAIOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1687 "syntax/header.tab.c"
-    break;
-
-  case 43: /* DesignExpr: DesignExpr TGEQ AddExpr  */
-#line 404 "syntax/header.y"
-                              { (yyval.n) = createBinaryNode(NOMAIOR_IGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1693 "syntax/header.tab.c"
-    break;
-
-  case 44: /* DesignExpr: DesignExpr TLEQ AddExpr  */
-#line 405 "syntax/header.y"
-                              { (yyval.n) = createBinaryNode(NOMENOR_IGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1699 "syntax/header.tab.c"
-    break;
-
-  case 45: /* DesignExpr: AddExpr  */
-#line 406 "syntax/header.y"
-              { (yyval.n) = (yyvsp[0].n); }
 #line 1705 "syntax/header.tab.c"
     break;
 
-  case 46: /* AddExpr: AddExpr TPLUS MulExpr  */
-#line 410 "syntax/header.y"
-                          { (yyval.n) = createBinaryNode(NOSOMA, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+  case 36: /* OrExpr: OrExpr TOR AndExpr  */
+#line 456 "syntax/header.y"
+                       { (yyval.n) = createBinaryNode(NOOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
 #line 1711 "syntax/header.tab.c"
     break;
 
-  case 47: /* AddExpr: AddExpr TMINUS MulExpr  */
-#line 411 "syntax/header.y"
-                             { (yyval.n) = createBinaryNode(NOSUBTRACAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+  case 37: /* OrExpr: AndExpr  */
+#line 457 "syntax/header.y"
+              { (yyval.n) = (yyvsp[0].n); }
 #line 1717 "syntax/header.tab.c"
     break;
 
-  case 48: /* AddExpr: MulExpr  */
-#line 412 "syntax/header.y"
-              { (yyval.n) = (yyvsp[0].n); }
+  case 38: /* AndExpr: AndExpr TAND EqExpr  */
+#line 461 "syntax/header.y"
+                        { (yyval.n) = createBinaryNode(NOAND, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
 #line 1723 "syntax/header.tab.c"
     break;
 
-  case 49: /* MulExpr: MulExpr TTIMES UnExpr  */
-#line 416 "syntax/header.y"
-                          { (yyval.n) = createBinaryNode(NOMULTIPLICACAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+  case 39: /* AndExpr: EqExpr  */
+#line 462 "syntax/header.y"
+             { (yyval.n) = (yyvsp[0].n); }
 #line 1729 "syntax/header.tab.c"
     break;
 
-  case 50: /* MulExpr: MulExpr TDIVIDE UnExpr  */
-#line 417 "syntax/header.y"
-                             { (yyval.n) = createBinaryNode(NODIVISAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+  case 40: /* EqExpr: EqExpr TEQ DesignExpr  */
+#line 466 "syntax/header.y"
+                          { (yyval.n) = createBinaryNode(NOIGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
 #line 1735 "syntax/header.tab.c"
     break;
 
-  case 51: /* MulExpr: UnExpr  */
-#line 418 "syntax/header.y"
-             { (yyval.n) = (yyvsp[0].n); }
+  case 41: /* EqExpr: EqExpr TNEQ DesignExpr  */
+#line 467 "syntax/header.y"
+                             { (yyval.n) = createBinaryNode(NODIFERENTE, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
 #line 1741 "syntax/header.tab.c"
     break;
 
-  case 52: /* UnExpr: TMINUS PrimExpr  */
-#line 422 "syntax/header.y"
-                    { (yyval.n) = createUnaryNode(NOMENOS_UNARIO, yylineno, TYINT, (yyvsp[0].n)); }
+  case 42: /* EqExpr: DesignExpr  */
+#line 468 "syntax/header.y"
+                 { (yyval.n) = (yyvsp[0].n); }
 #line 1747 "syntax/header.tab.c"
     break;
 
-  case 53: /* UnExpr: TNEG PrimExpr  */
-#line 423 "syntax/header.y"
-                    { (yyval.n) = createUnaryNode(NONEGACAO, yylineno, TYINT, (yyvsp[0].n)); }
+  case 43: /* DesignExpr: DesignExpr TLT AddExpr  */
+#line 472 "syntax/header.y"
+                           { (yyval.n) = createBinaryNode(NOMENOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
 #line 1753 "syntax/header.tab.c"
     break;
 
-  case 54: /* UnExpr: PrimExpr  */
-#line 424 "syntax/header.y"
-               { (yyval.n) = (yyvsp[0].n); }
+  case 44: /* DesignExpr: DesignExpr TGT AddExpr  */
+#line 473 "syntax/header.y"
+                             { (yyval.n) = createBinaryNode(NOMAIOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
 #line 1759 "syntax/header.tab.c"
     break;
 
-  case 55: /* PrimExpr: TID_TOKEN TLPAREN ListExpr TRPAREN  */
-#line 429 "syntax/header.y"
+  case 45: /* DesignExpr: DesignExpr TGEQ AddExpr  */
+#line 474 "syntax/header.y"
+                              { (yyval.n) = createBinaryNode(NOMAIOR_IGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+#line 1765 "syntax/header.tab.c"
+    break;
+
+  case 46: /* DesignExpr: DesignExpr TLEQ AddExpr  */
+#line 475 "syntax/header.y"
+                              { (yyval.n) = createBinaryNode(NOMENOR_IGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+#line 1771 "syntax/header.tab.c"
+    break;
+
+  case 47: /* DesignExpr: AddExpr  */
+#line 476 "syntax/header.y"
+              { (yyval.n) = (yyvsp[0].n); }
+#line 1777 "syntax/header.tab.c"
+    break;
+
+  case 48: /* AddExpr: AddExpr TPLUS MulExpr  */
+#line 480 "syntax/header.y"
+                          { (yyval.n) = createBinaryNode(NOSOMA, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+#line 1783 "syntax/header.tab.c"
+    break;
+
+  case 49: /* AddExpr: AddExpr TMINUS MulExpr  */
+#line 481 "syntax/header.y"
+                             { (yyval.n) = createBinaryNode(NOSUBTRACAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+#line 1789 "syntax/header.tab.c"
+    break;
+
+  case 50: /* AddExpr: MulExpr  */
+#line 482 "syntax/header.y"
+              { (yyval.n) = (yyvsp[0].n); }
+#line 1795 "syntax/header.tab.c"
+    break;
+
+  case 51: /* MulExpr: MulExpr TTIMES UnExpr  */
+#line 486 "syntax/header.y"
+                          { (yyval.n) = createBinaryNode(NOMULTIPLICACAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+#line 1801 "syntax/header.tab.c"
+    break;
+
+  case 52: /* MulExpr: MulExpr TDIVIDE UnExpr  */
+#line 487 "syntax/header.y"
+                             { (yyval.n) = createBinaryNode(NODIVISAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
+#line 1807 "syntax/header.tab.c"
+    break;
+
+  case 53: /* MulExpr: UnExpr  */
+#line 488 "syntax/header.y"
+             { (yyval.n) = (yyvsp[0].n); }
+#line 1813 "syntax/header.tab.c"
+    break;
+
+  case 54: /* UnExpr: TMINUS PrimExpr  */
+#line 492 "syntax/header.y"
+                    { (yyval.n) = createUnaryNode(NOMENOS_UNARIO, yylineno, TYINT, (yyvsp[0].n)); }
+#line 1819 "syntax/header.tab.c"
+    break;
+
+  case 55: /* UnExpr: TNEG PrimExpr  */
+#line 493 "syntax/header.y"
+                    { (yyval.n) = createUnaryNode(NONEGACAO, yylineno, TYINT, (yyvsp[0].n)); }
+#line 1825 "syntax/header.tab.c"
+    break;
+
+  case 56: /* UnExpr: PrimExpr  */
+#line 494 "syntax/header.y"
+               { (yyval.n) = (yyvsp[0].n); }
+#line 1831 "syntax/header.tab.c"
+    break;
+
+  case 57: /* PrimExpr: TID_TOKEN TLPAREN ListExpr TRPAREN  */
+#line 499 "syntax/header.y"
                                        {
     Node *call = createNnaryNode(NOCHAMADA_FUNCAO, yylineno, TYVOID);
     Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-3].str), 0, 0);
-    nnaryAddChild(call, id);
-    /* CORREÇÃO 4: Libera o lexema $1 */
-    free((yyvsp[-3].str));
-    
+    nnaryAddChild(call, id);    
     if ((yyvsp[-1].n) && (yyvsp[-1].n)->data.nnary.first) {
         Node *child = (yyvsp[-1].n)->data.nnary.first;
         while (child) {
@@ -1775,83 +1844,73 @@ yyreduce:
             child = next;
         }
     }
-
-    /* free do container ListExpr: já movemos os filhos */
-    if ((yyvsp[-1].n)) free((yyvsp[-1].n));
-
     (yyval.n) = call;
 }
-#line 1785 "syntax/header.tab.c"
+#line 1850 "syntax/header.tab.c"
     break;
 
-  case 56: /* PrimExpr: TID_TOKEN TLPAREN TRPAREN  */
-#line 451 "syntax/header.y"
+  case 58: /* PrimExpr: TID_TOKEN TLPAREN TRPAREN  */
+#line 514 "syntax/header.y"
                                 {
         Node *call = createNnaryNode(NOCHAMADA_FUNCAO, yylineno, TYVOID);
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-2].str), 0, 0);
         nnaryAddChild(call, id);
-        
-        /* CORREÇÃO 4: Libera o lexema $1 */
-        free((yyvsp[-2].str));
-
         (yyval.n) = call;
       }
-#line 1800 "syntax/header.tab.c"
+#line 1861 "syntax/header.tab.c"
     break;
 
-  case 57: /* PrimExpr: TID_TOKEN  */
-#line 461 "syntax/header.y"
+  case 59: /* PrimExpr: TID_TOKEN  */
+#line 520 "syntax/header.y"
                 {
-        (yyval.n) = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[0].str), 0, 0);
-        /* CORREÇÃO 4: Libera o lexema $1 */
-        free((yyvsp[0].str));
+        (yyval.n) = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[0].str), 0, 0);        
       }
-#line 1810 "syntax/header.tab.c"
+#line 1869 "syntax/header.tab.c"
     break;
 
-  case 58: /* PrimExpr: TCHAR_CONST  */
-#line 466 "syntax/header.y"
+  case 60: /* PrimExpr: TCHAR_CONST  */
+#line 523 "syntax/header.y"
                   {
         (yyval.n) = createLeafNode(NOCAR_CONST, yylineno, TYCAR, NULL, 0, (yyvsp[0].cval));
       }
-#line 1818 "syntax/header.tab.c"
+#line 1877 "syntax/header.tab.c"
     break;
 
-  case 59: /* PrimExpr: TINT_CONST  */
-#line 469 "syntax/header.y"
+  case 61: /* PrimExpr: TINT_CONST  */
+#line 526 "syntax/header.y"
                  {
         (yyval.n) = createLeafNode(NOINT_CONST, yylineno, TYINT, NULL, (yyvsp[0].ival), 0);
       }
-#line 1826 "syntax/header.tab.c"
+#line 1885 "syntax/header.tab.c"
     break;
 
-  case 60: /* PrimExpr: TLPAREN Expr TRPAREN  */
-#line 472 "syntax/header.y"
+  case 62: /* PrimExpr: TLPAREN Expr TRPAREN  */
+#line 529 "syntax/header.y"
                            { (yyval.n) = (yyvsp[-1].n); }
-#line 1832 "syntax/header.tab.c"
+#line 1891 "syntax/header.tab.c"
     break;
 
-  case 61: /* ListExpr: Expr  */
-#line 476 "syntax/header.y"
+  case 63: /* ListExpr: Expr  */
+#line 533 "syntax/header.y"
          {
         Node *l = createNnaryNode(NOLISTA_EXPR, yylineno, TYVOID);
         nnaryAddChild(l, (yyvsp[0].n));
         (yyval.n) = l;
       }
-#line 1842 "syntax/header.tab.c"
+#line 1901 "syntax/header.tab.c"
     break;
 
-  case 62: /* ListExpr: ListExpr TCOMMA Expr  */
-#line 481 "syntax/header.y"
+  case 64: /* ListExpr: ListExpr TCOMMA Expr  */
+#line 538 "syntax/header.y"
                            {
         nnaryAddChild((yyvsp[-2].n), (yyvsp[0].n));
         (yyval.n) = (yyvsp[-2].n);
       }
-#line 1851 "syntax/header.tab.c"
+#line 1910 "syntax/header.tab.c"
     break;
 
 
-#line 1855 "syntax/header.tab.c"
+#line 1914 "syntax/header.tab.c"
 
       default: break;
     }
@@ -2044,7 +2103,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 488 "syntax/header.y"
+#line 545 "syntax/header.y"
 
 
 /* User C Code */
@@ -2068,6 +2127,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+
     /* preparar tabela de símbolos */
     //SymbolTable *table = NULL;
    // initialize_symbol_table(&table);
@@ -2080,6 +2140,9 @@ int main(int argc, char **argv) {
 
     /* PARSE */
     // Assumindo que 'root' é uma variável global que recebe o nó raiz da AST
+    initialize_symbol_table(&global);
+    current = global;
+    declaration_position = 0;
     yyparse(); 
     printAST(root, 0);
     fclose(yyin);
@@ -2105,8 +2168,9 @@ int main(int argc, char **argv) {
 
     /* Liberar recursos SEMPRE */
     // 🌳 Libera a Árvore Sintática Abstrata
+    print_symbol_table(global);
     if (root) {
-        freeAST(root);
+       // freeAST(root);
         root = NULL;
     }
 

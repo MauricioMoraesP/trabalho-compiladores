@@ -100,7 +100,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 25 "syntax/header.y"
+#line 29 "syntax/header.y"
 
     int ival;
     char cval;

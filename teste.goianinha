@@ -1,4 +1,12 @@
+int x;
+int duplicado(int x) {
+
+    escreva x;
+    retorne 0;
+}
+
 programa {
-    escreva "linha1
-    linha2";
+    int x;
+    x = 2;
+    duplicado(x);
 }

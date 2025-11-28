@@ -23,7 +23,7 @@ int error = 0;
 SymbolTable *global=NULL;
 SymbolTable *current=NULL;
 int declaration_position = 0;
-
+int sem_error = 0;
 %}
 
 %union {
@@ -105,15 +105,13 @@ DeclFuncVar:
         $$ = list;
     }
        | Tipo TID_TOKEN DeclFunc DeclFuncVar {
-        /* Inserir função no escopo global com tipos de parametro */
         Node *func = createNnaryNode(NODECL_FUNCAO, yylineno, $1);
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnaryAddChild(func, id);
 
-        /* extrair lista de parametros do $3 (DeclFunc -> wrap: params, bloco) */
         Node *params_node = NULL;
         if ($3 && $3->data.nnary.first) {
-            params_node = $3->data.nnary.first; /* primeiro filho é ListaParametros */
+            params_node = $3->data.nnary.first; 
         }
         int num_params = 0;
         DataType *param_types = NULL;
@@ -163,7 +161,6 @@ DeclProg:
 DeclVar:
     TCOMMA TID_TOKEN DeclVar {
         Node *id_node = createLeafNode(NOIDENTIFICADOR, yylineno, TYVOID, $2, 0, 0);
-        /* criar nova lista com o id atual em primeiro */
         Node *list = createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
         nnaryAddChild(list, id_node);
 
@@ -171,7 +168,6 @@ DeclVar:
             Node *child = $3->data.nnary.first;
             while (child) {
                 Node *next = child->next;
-                /* desconectar antes de anexar */
                 child->next = NULL;
                 nnaryAddChild(list, child);
                 child = next;
@@ -189,12 +185,12 @@ DeclFunc:
     { 
         Node *wrap = createNnaryNode(NOFUNC_COMPONENTS, yylineno, TYVOID);
         
-        Node *params = $3;   // ✔ correto
+        Node *params = $3; 
         if (!params)
             params = createNnaryNode(NOLISTA_PARAMS, yylineno, TYVOID);
 
         nnaryAddChild(wrap, params);
-        nnaryAddChild(wrap, $5);  // ✔ correto
+        nnaryAddChild(wrap, $5);  
 
         remove_current_scope(&current);
         $$ = wrap;
@@ -262,7 +258,6 @@ Bloco:
     {
         create_new_scope(&current);
         declaration_position = 0;
-
     }
     ListaDeclVar
     ListaComando
@@ -270,8 +265,6 @@ Bloco:
     {
         remove_current_scope(&current);
         Node *bloco = createNnaryNode(NOBLOCO, yylineno, TYVOID);
-
-        /* $3 = ListaDeclVar */
         if ($3) {
             Node *child = $3->data.nnary.first;
             while (child) {
@@ -282,7 +275,6 @@ Bloco:
             }
         }
 
-        /* $4 = ListaComando */
         if ($4) {
             Node *child = $4->data.nnary.first;
             while (child) {
@@ -307,11 +299,9 @@ ListaDeclVar:
     |
     Tipo TID_TOKEN DeclVar TSEMICOLON ListaDeclVar 
     {
-        /* Criar declaração individual */
         Node *decl = createNnaryNode(NODECL_VAR, yylineno, $1);
         Node *id = createLeafNode(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnaryAddChild(decl, id);
-        /* Inserir a primeira variável declarada */
         if (current) {
             int r = insert_variable(
                 current,
@@ -327,7 +317,6 @@ ListaDeclVar:
             }
         }
 
-        /* Adicionar variáveis que vieram em DeclVar (após vírgulas) */
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
 
@@ -350,7 +339,6 @@ ListaDeclVar:
             }
         }
 
-        /* Acumular no nó recursivo */
         Node *acc = $5 ? $5 : createNnaryNode(NOLISTA_DECL, yylineno, TYVOID);
 
         nnaryAddChild(acc, decl);
@@ -382,7 +370,8 @@ ListaComando:
             nnaryAddChild(l, $1); 
             $$ = l; 
         }
-        else { $$ = NULL; } // Comando nulo, retorna NULL. OK.
+        else { $$ = NULL; }
+        
     }
 ;
 
@@ -565,60 +554,26 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-
-    /* preparar tabela de símbolos */
-    //SymbolTable *table = NULL;
-   // initialize_symbol_table(&table);
-    
-    // 💡 Salva o ponteiro para o escopo RAIZ (Nível 0).
-   // SymbolTable *table_root = table; 
-    
-    // 'table' passa a apontar para o escopo interno/atual (Nível 1)
-   // create_new_scope(&table); 
-
-    /* PARSE */
-    // Assumindo que 'root' é uma variável global que recebe o nó raiz da AST
     initialize_symbol_table(&global);
     current = global;
     declaration_position = 0;
+
     yyparse(); 
     printAST(root, 0);
     fclose(yyin);
+    analyze_program(root, global);
 
-    /* Se houve erro sintático, liberar tudo e encerrar */
     if (error) {
         if (root) {
             freeAST(root);
             root = NULL;
         }
-        // 🛑 Usa a raiz para destruir todos os escopos.
-       /* if (table_root) { 
-            destroy_symbol_table(table_root);
-            table_root = NULL;
-        }*/
         fprintf(stderr, "Falha: foram encontrados erros sintáticos.\n");
         return 1;
     }
 
-    /* Sem erros sintáticos → executar análise semântica */
-    // Note: analyze_semantic deve usar e restaurar os escopos corretamente.
-    //analyze_semantic(root, table); 
-
-    /* Liberar recursos SEMPRE */
-    // 🌳 Libera a Árvore Sintática Abstrata
     print_symbol_table(global);
-    if (root) {
-       // freeAST(root);
-        root = NULL;
-    }
-
-    // 📚 Libera a Tabela de Símbolos, usando o ponteiro RAIZ.
-   /* if (table_root) {
-        destroy_symbol_table(table_root);
-        table_root = NULL;
-    }*/
-
-    /* Resultado final */
+   
     if (error) {
         fprintf(stderr,
                 "Sucesso: análise foi concluída, mas foram encontrados erros semânticos.\n");

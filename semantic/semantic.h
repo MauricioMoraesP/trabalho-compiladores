@@ -8,9 +8,10 @@
 #include <string.h>
 
 // Função para verificar se o lexema foi declarado na tabela de símbolos
-int check_if_declared(SymbolTable *table, char *lex);
-int is_valid_type(DataType type);
-int is_valid_expression(Node *expr);
-int are_types_compatible(DataType left, DataType right, NodeType operation);
+void analyze_program(Node *ast, SymbolTable *global_scope);
+void analyze_function(Node *func_node, SymbolTable *global_scope);
+void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return);
+Types analyze_expression(Node *expr, SymbolTable *scope);
+Types analyze_func_call(Node *call, SymbolTable *scope);
 
 #endif

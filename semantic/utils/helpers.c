@@ -4,30 +4,33 @@
 #include <string.h>
 #include "helpers.h"
 
-int convert_type(int value, ConvertDirection dir)
+int convert_type(Types t)
 {
-    if (dir == FROM_TYPES)
-    {
-        if (value == TYINT)
-            return INT_TYPE;
-        if (value == TYCAR)
-            return CAR_TYPE;
-    }
-    else
-    {
-        if (value == INT_TYPE)
-            return TYINT;
-        if (value == CAR_TYPE)
-            return TYCAR;
-    }
 
-    printf("Valor de tipo inválido!\n");
-    exit(1);
+    switch (t)
+    {
+    case TYINT:
+        return INT_TYPE;
+    case TYCAR:
+        return CAR_TYPE;
+    default:
+        return INT_TYPE;
+    }
 }
 
-void error_message(int line, const char *message)
+#include <stdarg.h>
+
+void error_message(int line, const char *fmt, ...)
 {
-    printf("\n[ERRO SEMÂNTICO] Linha %d: %s\n", line, message);
+    va_list args;
+
+    printf("\n[ERRO SEMÂNTICO] Linha %d: ", line);
+
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+
+    printf("\n");
     exit(1);
 }
 

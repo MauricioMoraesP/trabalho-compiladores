@@ -22,5 +22,6 @@ typedef struct
 } NodeDictionaryEntry;
 
 const NodeDictionaryEntry *findInfosNode(NSpecies s);
+void nnary_merge_children(Node *dest, Node *src);
 
 #endif

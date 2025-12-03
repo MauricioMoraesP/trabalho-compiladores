@@ -65,16 +65,7 @@ int sem_error = 0;
 Programa:
     DeclFuncVar DeclProg {
         Node *program = create_nnary_node(NOPROGRAMA, yylineno, TYVOID);
-
-        if ($1 && $1->data.nnary.first) {
-            Node *child = $1->data.nnary.first;
-            while (child) {
-                Node *next = child->next;
-                nnary_add_child(program, child);
-                child = next;
-            }
-        }
-
+        nnary_merge_children(program, $1);
         if ($2)
             nnary_add_child(program, $2);
         $$ = program;
@@ -88,16 +79,7 @@ DeclFuncVar:
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnary_add_child(decl, id);
         insert_variable(current, $2, $1, declaration_position);
-
-
-        if ($3 && $3->data.nnary.first) {
-            Node *child = $3->data.nnary.first;
-            while (child) {
-                Node *next = child->next; 
-                nnary_add_child(decl, child);
-                child = next;
-            }
-        }
+        nnary_merge_children(decl, $3);
 
         Node *list = ($5 ? $5 : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID));
         nnary_add_child(list, decl);
@@ -135,14 +117,7 @@ DeclFuncVar:
                 num_params, param_types);
         }
 
-        if ($3 && $3->data.nnary.first) {
-            Node *child = $3->data.nnary.first;
-            while (child) {
-                Node *next = child->next;
-                nnary_add_child(func, child);
-                child = next;
-            }
-        }
+        nnary_merge_children(func, $3);
         Node *list = $4 ? $4 : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
         nnary_add_child(list, func);
         $$ = list;
@@ -162,16 +137,7 @@ DeclVar:
         Node *id_node = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, $2, 0, 0);
         Node *list = create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
         nnary_add_child(list, id_node);
-
-        if ($3 && $3->data.nnary.first) {
-            Node *child = $3->data.nnary.first;
-            while (child) {
-                Node *next = child->next;
-                child->next = NULL;
-                nnary_add_child(list, child);
-                child = next;
-            }
-        }
+        nnary_merge_children(list, $3);
         $$ = list;
     }
     | %empty { $$ = NULL; }
@@ -216,11 +182,9 @@ ListaParametrosCont:
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnary_add_child(list, param);
 
-         if (current) {
-             int r = insert_parameter(current, $2,
-                 ($1 == TYINT ? INT_TYPE : CAR_TYPE),
-                 declaration_position++);
-         }
+         if (current) 
+            insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE), declaration_position++);
+         
 
          $$ = list;
      }
@@ -230,11 +194,9 @@ ListaParametrosCont:
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnary_add_child(list, param);
 
-         if (current) {
-             int r = insert_parameter(current, $2,
-                 ($1 == TYINT ? INT_TYPE : CAR_TYPE),
-                 declaration_position++);
-         }
+         if (current) 
+              insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
+         
 
          $$ = list;
      }
@@ -252,26 +214,8 @@ Bloco:
     {
         remove_current_scope(&current);
         Node *bloco = create_nnary_node(NOBLOCO, yylineno, TYVOID);
-        if ($3) {
-            Node *child = $3->data.nnary.first;
-            while (child) {
-                Node *next = child->next;
-                child->next = NULL;
-                nnary_add_child(bloco, child);
-                child = next;
-            }
-        }
-
-        if ($4) {
-            Node *child = $4->data.nnary.first;
-            while (child) {
-                Node *next = child->next;
-                child->next = NULL;
-                nnary_add_child(bloco, child);
-                child = next;
-            }
-        }
-
+        nnary_merge_children(bloco, $3);
+        nnary_merge_children(bloco, $4);
         $$ = bloco;
     }
 ;
@@ -289,14 +233,9 @@ ListaDeclVar:
         Node *decl = create_nnary_node(NODECL_VAR, yylineno, $1);
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnary_add_child(decl, id);
-        if (current) {
-            int r = insert_variable(
-                current,
-                $2,
-                ($1 == TYINT ? INT_TYPE : CAR_TYPE),
-                declaration_position++
-            );
-        }
+        if (current) 
+            insert_variable(current,$2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
+        
 
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
@@ -470,14 +409,7 @@ PrimExpr:
     Node *call = create_nnary_node(NOCHAMADA_FUNCAO, yylineno, TYVOID);
     Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0);
     nnary_add_child(call, id);    
-    if ($3 && $3->data.nnary.first) {
-        Node *child = $3->data.nnary.first;
-        while (child) {
-            Node *next = child->next;
-            nnary_add_child(call, child);
-            child = next;
-        }
-    }
+    nnary_merge_children(call, $3);
     $$ = call;
 }
 
@@ -548,14 +480,14 @@ int main(int argc, char **argv) {
             free_ast(root);
             root = NULL;
         }
-        fprintf(stderr, "Falha: foram encontrados erros sintáticos.\n");
+        fprintf(stderr, "Falha: foram encontrados erros SINTÁTICO.\n");
         return 1;
     }
 
    
-    if (error) {
+    if (sem_error) {
         fprintf(stderr,
-                "Sucesso: análise foi concluída, mas foram encontrados erros semânticos.\n");
+                "Sucesso: análise foi concluída, mas foram encontrados erros SEMÂNTICO.\n");
         return 1;
     }
 

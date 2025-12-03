@@ -56,3 +56,18 @@ const NodeDictionaryEntry *findInfosNode(const NSpecies s)
     }
     return NULL;
 }
+
+/* Função de apoio para a tabela de simbolos..*/
+void nnary_merge_children(Node *dest, Node *src)
+{
+    if (!src || !src->data.nnary.first)
+        return;
+
+    Node *child = src->data.nnary.first;
+    while (child)
+    {
+        Node *next = child->next;
+        nnary_add_child(dest, child);
+        child = next;
+    }
+}

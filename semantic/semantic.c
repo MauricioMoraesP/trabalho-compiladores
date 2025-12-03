@@ -9,9 +9,7 @@
 #include "../syntax/utils/dictionary/dictionary.h"
 
 extern int sem_error;
-
 Types current_function_type = TYVOID;
-
 SymbolTable *root_gl_scope = NULL;
 
 void analyze_program(Node *ast, SymbolTable *global_scope)
@@ -21,7 +19,7 @@ void analyze_program(Node *ast, SymbolTable *global_scope)
 
     if (ast->species != NOPROGRAMA)
     {
-        error_message(ast->row, "AST inválida: raiz não é NOPROGRAMA.");
+        error_message(ast->row, "AST invalida: raiz nao e NOPROGRAMA.");
         sem_error = 1;
         return;
     }
@@ -100,7 +98,7 @@ void analyze_function(Node *func_node, SymbolTable *global_scope)
 
                 if (table_search_name_in_scope(function_scope, name))
                 {
-                    error_message(p->row, "Parâmetro '%s' redeclarado.", name);
+                    error_message(p->row, "Parametro '%s' redeclarado.", name);
                     sem_error = 1;
                 }
                 else
@@ -225,11 +223,11 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
 
     case NORETURN:
     {
-        Node *expr = cmd->data.unary.n;
-        Types tret = analyze_expression(expr, *scope);
+        Node *expression = cmd->data.unary.n;
+        Types tret = analyze_expression(expression, *scope);
         if (tret != expected_return)
         {
-            error_message(cmd->row, "Tipo da expressão retornada difere do tipo da função.");
+            error_message(cmd->row, "Tipo da expressionessão retornada difere do tipo da função.");
             sem_error = 1;
         }
         break;
@@ -276,12 +274,12 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
     }
 }
 
-Types analyze_expression(Node *expr, SymbolTable *scope)
+Types analyze_expression(Node *expression, SymbolTable *scope)
 {
-    if (!expr)
+    if (!expression)
         return TYVOID;
 
-    switch (expr->species)
+    switch (expression->species)
     {
     case NOINT_CONST:
         return TYINT;
@@ -291,74 +289,74 @@ Types analyze_expression(Node *expr, SymbolTable *scope)
 
     case NOIDENTIFICADOR:
     {
-        SymbolEntry *sym = table_search_up(scope, expr->data.leaf.lexeme);
-        if (!sym)
+        SymbolEntry *symbol = table_search_up(scope, expression->data.leaf.lexeme);
+        if (!symbol)
         {
-            error_message(expr->row, "Identificador '%s' não declarado.", expr->data.leaf.lexeme);
+            error_message(expression->row, "Identificador '%s' não declarado.", expression->data.leaf.lexeme);
             sem_error = 1;
             return TYVOID;
         }
-        return convert_type(sym->type);
+        return convert_type(symbol->type);
     }
 
     case NOATRIBUICAO:
     {
-        return analyze_assignment(expr, scope);
+        return analyze_assignment(expression, scope);
     }
 
     case NOSOMA:
     case NOSUBTRACAO:
     case NOMULTIPLICACAO:
     case NODIVISAO:
-        return check_binary_int(expr, scope, "Operações aritméticas exigem inteiros.");
+        return check_binary_int(expression, scope, "Operações aritméticas exigem inteiros.");
     case NOOR:
     case NOAND:
-        return check_binary_int(expr, scope, "Operações lógicas exigem inteiros.");
+        return check_binary_int(expression, scope, "Operações lógicas exigem inteiros.");
     case NOIGUAL:
     case NODIFERENTE:
     case NOMENOR:
     case NOMENOR_IGUAL:
     case NOMAIOR:
     case NOMAIOR_IGUAL:
-        return check_binary_same(expr, scope, "Comparação entre tipos diferentes.");
+        return check_binary_same(expression, scope, "Comparação entre tipos diferentes.");
     case NOCHAMADA_FUNCAO:
-        return analyze_func_call(expr, scope);
+        return analyze_func_call(expression, scope);
 
     default:
         return TYVOID;
     }
 }
 
-Types analyze_func_call(Node *call, SymbolTable *scope)
+Types analyze_func_call(Node *func, SymbolTable *scope)
 {
-    Node *name_node = call->data.nnary.first;
+    Node *name_node = func->data.nnary.first;
     if (!name_node || name_node->species != NOIDENTIFICADOR)
     {
-        error_message(call->row, "Chamada de função inválida (nome ausente).");
+        error_message(func->row, "Chamada de função inválida (nome ausente).");
         sem_error = 1;
         return TYVOID;
     }
 
     char *func_name = name_node->data.leaf.lexeme;
-    SymbolEntry *sym = table_search_up(scope, func_name);
-    if (!sym)
+    SymbolEntry *symbol = table_search_up(scope, func_name);
+    if (!symbol)
     {
-        error_message(call->row, "Função '%s' não declarada.", func_name);
+        error_message(func->row, "Função '%s' não declarada.", func_name);
         sem_error = 1;
         return TYVOID;
     }
-    if (sym->entry != FUN_ENTRY)
+    if (symbol->entry != FUN_ENTRY)
     {
-        error_message(call->row, "'%s' não é uma função.", func_name);
+        error_message(func->row, "'%s' não é uma função.", func_name);
         sem_error = 1;
         return TYVOID;
     }
 
-    Types ret = convert_type(sym->data.fun_data.type);
-    Node *arg_list = name_node->next;
-    int expected = sym->data.fun_data.count_params;
+    Types ret = convert_type(symbol->data.fun_data.type);
+    Node *args = name_node->next;
+    int expected = symbol->data.fun_data.count_params;
     int actual = 0;
-    Node *p = arg_list;
+    Node *p = args;
     while (p)
     {
         actual++;
@@ -366,24 +364,23 @@ Types analyze_func_call(Node *call, SymbolTable *scope)
     }
     if (actual != expected)
     {
-        error_message(call->row, "Função '%s' chamada com %d argumentos, mas espera %d.",
-                      func_name, actual, expected);
+        error_message(func->row, "Funcao '%s' chamada com %d argumentos, mas espera %d.", func_name, actual, expected);
         sem_error = 1;
     }
 
-    DataType *formal = sym->data.fun_data.param_types;
-    p = arg_list;
-    int idx = 0;
-    while (p && idx < expected)
+    DataType *formal = symbol->data.fun_data.param_types;
+    p = args;
+    int i = 0;
+    while (p && i < expected)
     {
         Types arg_t = analyze_expression(p, scope);
-        Types formal_t = convert_type(formal[idx]);
+        Types formal_t = convert_type(formal[i]);
         if (arg_t != formal_t)
         {
-            error_message(call->row, "Tipo do argumento %d da função '%s' incompatível.", idx + 1, func_name);
+            error_message(func->row, "Tipo do argumento %d da funcao '%s' imcopativel.", i + 1, func_name);
             sem_error = 1;
         }
-        idx++;
+        i++;
         p = p->next;
     }
 

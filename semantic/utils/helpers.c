@@ -28,6 +28,7 @@ void error_message(int line, const char *fmt, ...)
     vfprintf(stderr, fmt, args);
     va_end(args);
     fprintf(stderr, "\n");
+    sem_error = 1;
     exit(1);
 }
 

@@ -24,3 +24,20 @@ void helper_not_null(const void *ptr, char *context)
         exit(EXIT_FAILURE);
     }
 }
+
+void free_scope_entries(SymbolEntry *entry)
+{
+    while (entry)
+    {
+        SymbolEntry *next = entry->next_symbol;
+
+        if (entry->lexeme.lex)
+            free(entry->lexeme.lex);
+
+        if (entry->entry == FUN_ENTRY && entry->data.fun_data.param_types)
+            free(entry->data.fun_data.param_types);
+
+        free(entry);
+        entry = next;
+    }
+}

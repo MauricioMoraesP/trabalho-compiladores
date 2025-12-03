@@ -42,26 +42,7 @@ void remove_current_scope(SymbolTable **scope)
     *scope = previous_scope;
 
     SymbolEntry *entry = scope_to_remove->first_entry;
-    while (entry != NULL)
-    {
-        SymbolEntry *next = entry->next_symbol;
-
-        if (entry->lexeme.lex)
-        {
-            free(entry->lexeme.lex);
-            entry->lexeme.lex = NULL;
-        }
-
-        if (entry->entry == FUN_ENTRY && entry->data.fun_data.param_types)
-        {
-            free(entry->data.fun_data.param_types);
-            entry->data.fun_data.param_types = NULL;
-        }
-
-        free(entry);
-        entry = next;
-    }
-
+    free_scope_entries(scope_to_remove->first_entry);
     free(scope_to_remove);
 }
 
@@ -72,34 +53,18 @@ void destroy_symbol_table(SymbolTable *table)
         return;
 
     SymbolTable *top = table;
+
     while (top)
     {
-        SymbolEntry *current = top->first_entry;
-        while (current)
-        {
-            SymbolEntry *next = current->next_symbol;
-            if (current->lexeme.lex)
-                free(current->lexeme.lex);
-
-            if (current->entry == FUN_ENTRY && current->data.fun_data.param_types)
-            {
-                free(current->data.fun_data.param_types);
-                current->data.fun_data.param_types = NULL;
-            }
-
-            free(current);
-            current = next;
-        }
-
         SymbolTable *prev = top->before_scope;
+        free_scope_entries(top->first_entry);
         free(top);
         top = prev;
     }
 }
 
 /* Inserção genérica de símbolo no escopo corrente */
-int insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type,
-                  int num_params, DataType *param_types, int declaration_position)
+int insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position)
 {
     helper_not_null(scope, "inserir um novo simbolo");
 

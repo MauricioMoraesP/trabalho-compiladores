@@ -3,10 +3,9 @@
 #include "../syntax/ast.h"
 #include "../syntax/utils/dictionary/dictionary.h"
 #include "../symbol_table/structure.h"
-extern int sem_error;
-
 #include <stdio.h>
 #include <string.h>
+extern int sem_error;
 
 // Função para verificar se o lexema foi declarado na tabela de símbolos
 void analyze_program(Node *ast, SymbolTable *global_scope);

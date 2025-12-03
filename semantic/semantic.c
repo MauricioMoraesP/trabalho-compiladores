@@ -53,7 +53,7 @@ void analyze_program(Node *ast, SymbolTable *global_scope)
                         char *name = decl_id->data.leaf.lexeme;
                         Types tdecl = child->type;
 
-                        if (!table_search_name_in_CURRENT_scope(global_scope, name))
+                        if (!table_search_name_in_scope(global_scope, name))
                         {
                             insert_variable(global_scope, name, convert_type(tdecl), 0);
                         }
@@ -98,7 +98,7 @@ void analyze_function(Node *func_node, SymbolTable *global_scope)
                 char *name = p->data.leaf.lexeme;
                 Types tparam = p->type;
 
-                if (table_search_name_in_CURRENT_scope(function_scope, name))
+                if (table_search_name_in_scope(function_scope, name))
                 {
                     error_message(p->row, "Parâmetro '%s' redeclarado.", name);
                     sem_error = 1;
@@ -164,7 +164,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
                 char *name = decl->data.leaf.lexeme;
                 Types tdecl = cmd->type;
 
-                if (table_search_name_in_CURRENT_scope(*scope, name))
+                if (table_search_name_in_scope(*scope, name))
                 {
                     error_message(decl->row, "Variável '%s' redeclarada no mesmo escopo.", name);
                     sem_error = 1;
@@ -175,7 +175,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
 
                     if ((*scope)->before_scope)
                     {
-                        found = table_search_upwards((*scope)->before_scope, name);
+                        found = table_search_up((*scope)->before_scope, name);
                     }
 
                     if (found && found->entry == PARAM_ENTRY)
@@ -207,7 +207,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
             break;
         }
 
-        SymbolEntry *sym = table_search_upwards(*scope, left->data.leaf.lexeme);
+        SymbolEntry *sym = table_search_up(*scope, left->data.leaf.lexeme);
         if (!sym)
         {
             error_message(cmd->row, "Variável '%s' não declarada.", left->data.leaf.lexeme);
@@ -296,7 +296,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
             sem_error = 1;
             break;
         }
-        SymbolEntry *s = table_search_upwards(*scope, id->data.leaf.lexeme);
+        SymbolEntry *s = table_search_up(*scope, id->data.leaf.lexeme);
         if (!s)
         {
             error_message(id->row, "Variável '%s' não declarada.", id->data.leaf.lexeme);
@@ -331,7 +331,7 @@ Types analyze_expression(Node *expr, SymbolTable *scope)
 
     case NOIDENTIFICADOR:
     {
-        SymbolEntry *sym = table_search_upwards(scope, expr->data.leaf.lexeme);
+        SymbolEntry *sym = table_search_up(scope, expr->data.leaf.lexeme);
         if (!sym)
         {
             error_message(expr->row, "Identificador '%s' não declarado.", expr->data.leaf.lexeme);
@@ -353,7 +353,7 @@ Types analyze_expression(Node *expr, SymbolTable *scope)
             return TYVOID;
         }
 
-        SymbolEntry *sym = table_search_upwards(scope, left->data.leaf.lexeme);
+        SymbolEntry *sym = table_search_up(scope, left->data.leaf.lexeme);
         if (!sym)
         {
             error_message(expr->row, "Variável '%s' não declarada.", left->data.leaf.lexeme);
@@ -436,7 +436,7 @@ Types analyze_func_call(Node *call, SymbolTable *scope)
     }
 
     char *func_name = name_node->data.leaf.lexeme;
-    SymbolEntry *sym = table_search_upwards(scope, func_name);
+    SymbolEntry *sym = table_search_up(scope, func_name);
     if (!sym)
     {
         error_message(call->row, "Função '%s' não declarada.", func_name);

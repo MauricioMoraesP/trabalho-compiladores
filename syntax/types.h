@@ -3,6 +3,7 @@
 
 #include "../symbol_table/structure.h"
 
+/* Tipos de dado possíveis*/
 typedef enum
 {
     TYINT,
@@ -10,6 +11,7 @@ typedef enum
     TYVOID
 } Types;
 
+/* Espécies/Tokens de nós da AST*/
 typedef enum
 {
     NODECL_VAR,
@@ -51,6 +53,7 @@ typedef enum
     NOLISTA_PARAMS
 } NSpecies;
 
+/* Informação armazenada por nós folha */
 typedef struct LeafInfo
 {
     char *lexeme;
@@ -60,17 +63,20 @@ typedef struct LeafInfo
 
 typedef struct Node Node;
 
+/* Nó unário */
 typedef struct NUnary
 {
     Node *n;
 } NUnary;
 
+/* Nó binário */
 typedef struct NBinary
 {
     Node *left;
     Node *right;
 } BinaryNode;
 
+/* Nó if-else */
 typedef struct IfElseNode
 {
     Node *condition_node;
@@ -78,11 +84,13 @@ typedef struct IfElseNode
     Node *else_node;
 } IfElseNode;
 
+/* Nó com N filhos*/
 typedef struct Nnary
 {
     Node *first;
 } Nnary;
 
+/* Union de dados específicos dependendo do tipo de nó */
 typedef union NodeInfo
 {
     NUnary unary;
@@ -92,13 +100,13 @@ typedef union NodeInfo
     Nnary nnary;
 } NodeInfo;
 
+/* Estrutura dos nós da AST */
 struct Node
 {
     NSpecies species;
     Types type;
     int row;
     NodeInfo data;
-
     struct Node *next;
 };
 

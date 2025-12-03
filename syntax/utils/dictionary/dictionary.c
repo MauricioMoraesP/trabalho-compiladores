@@ -46,6 +46,7 @@ const NodeDictionaryEntry NODE_DICTIONARY[] = {
     {(NSpecies)-1, NULL, 0, 0, 0},
 };
 
+/*Função responsável em encontrar o tipo do Nó associado ao dicionário.*/
 const NodeDictionaryEntry *findInfosNode(const NSpecies s)
 {
     for (int i = 0; NODE_DICTIONARY[i].species != -1; i++)

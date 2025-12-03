@@ -12,7 +12,7 @@ extern int sem_error;
 
 Types current_function_type = TYVOID;
 
-static SymbolTable *root_global_scope = NULL;
+SymbolTable *root_gl_scope = NULL;
 
 void analyze_program(Node *ast, SymbolTable *global_scope)
 {
@@ -26,7 +26,7 @@ void analyze_program(Node *ast, SymbolTable *global_scope)
         return;
     }
 
-    root_global_scope = global_scope;
+    root_gl_scope = global_scope;
 
     Node *child = ast->data.unary.n;
     while (child)
@@ -151,7 +151,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
 
     case NODECL_VAR:
     {
-        if (*scope == root_global_scope)
+        if (*scope == root_gl_scope)
         {
             break;
         }
@@ -197,55 +197,20 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
 
     case NOATRIBUICAO:
     {
-        Node *left = cmd->data.binary.left;
-        Node *right = cmd->data.binary.right;
-
-        if (!left || left->species != NOIDENTIFICADOR)
-        {
-            error_message(cmd->row, "Atribuição inválida: lado esquerdo não é identificador.");
-            sem_error = 1;
-            break;
-        }
-
-        SymbolEntry *sym = table_search_up(*scope, left->data.leaf.lexeme);
-        if (!sym)
-        {
-            error_message(cmd->row, "Variável '%s' não declarada.", left->data.leaf.lexeme);
-            sem_error = 1;
-            break;
-        }
-
-        Types rt = analyze_expression(right, *scope);
-        Types lt = convert_type(sym->type);
-
-        if (rt != lt)
-        {
-            error_message(cmd->row, "Atribuição com tipo incompatível para '%s'.", left->data.leaf.lexeme);
-            sem_error = 1;
-        }
+        analyze_assignment(cmd, *scope);
         break;
     }
 
     case NOIF:
     {
-        Types cond_t = analyze_expression(cmd->data.ifelse.condition_node, *scope);
-        if (cond_t != TYINT)
-        {
-            error_message(cmd->row, "Condição do 'se' deve ser int.");
-            sem_error = 1;
-        }
+        require_int(cmd->data.binary.left, *scope, "Condição do 'se' deve ser int.");
         analyze_command(cmd->data.ifelse.then_node, scope, expected_return);
         break;
     }
 
     case NOIF_ELSE:
     {
-        Types cond_t = analyze_expression(cmd->data.ifelse.condition_node, *scope);
-        if (cond_t != TYINT)
-        {
-            error_message(cmd->row, "Condição do 'se' deve ser int.");
-            sem_error = 1;
-        }
+        require_int(cmd->data.binary.left, *scope, "Condição do 'se então' deve ser int.");
         analyze_command(cmd->data.ifelse.then_node, scope, expected_return);
         analyze_command(cmd->data.ifelse.else_node, scope, expected_return);
         break;
@@ -253,12 +218,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types expected_return)
 
     case NOWHILE:
     {
-        Types cond_t = analyze_expression(cmd->data.binary.left, *scope);
-        if (cond_t != TYINT)
-        {
-            error_message(cmd->row, "Condição do 'enquanto' deve ser int.");
-            sem_error = 1;
-        }
+        require_int(cmd->data.binary.left, *scope, "Condição do 'enquanto' deve ser int.");
         analyze_command(cmd->data.binary.right, scope, expected_return);
         break;
     }
@@ -343,80 +303,24 @@ Types analyze_expression(Node *expr, SymbolTable *scope)
 
     case NOATRIBUICAO:
     {
-        Node *left = expr->data.binary.left;
-        Node *right = expr->data.binary.right;
-
-        if (!left || left->species != NOIDENTIFICADOR)
-        {
-            error_message(expr->row, "Atribuição inválida: lado esquerdo não é identificador.");
-            sem_error = 1;
-            return TYVOID;
-        }
-
-        SymbolEntry *sym = table_search_up(scope, left->data.leaf.lexeme);
-        if (!sym)
-        {
-            error_message(expr->row, "Variável '%s' não declarada.", left->data.leaf.lexeme);
-            sem_error = 1;
-            return TYVOID;
-        }
-
-        Types rt = analyze_expression(right, scope);
-        Types lt = convert_type(sym->type);
-
-        if (rt != lt)
-        {
-            error_message(expr->row, "Atribuição com tipo incompatível para '%s'.", left->data.leaf.lexeme);
-            sem_error = 1;
-        }
-        return lt;
+        return analyze_assignment(expr, scope);
     }
 
     case NOSOMA:
     case NOSUBTRACAO:
     case NOMULTIPLICACAO:
     case NODIVISAO:
-    {
-        Types l = analyze_expression(expr->data.binary.left, scope);
-        Types r = analyze_expression(expr->data.binary.right, scope);
-        if (l != TYINT || r != TYINT)
-        {
-            error_message(expr->row, "Operações aritméticas exigem inteiros.");
-            sem_error = 1;
-        }
-        return TYINT;
-    }
-
+        return check_binary_int(expr, scope, "Operações aritméticas exigem inteiros.");
     case NOOR:
     case NOAND:
-    {
-        Types l = analyze_expression(expr->data.binary.left, scope);
-        Types r = analyze_expression(expr->data.binary.right, scope);
-        if (l != TYINT || r != TYINT)
-        {
-            error_message(expr->row, "Operações lógicas exigem inteiros.");
-            sem_error = 1;
-        }
-        return TYINT;
-    }
-
+        return check_binary_int(expr, scope, "Operações lógicas exigem inteiros.");
     case NOIGUAL:
     case NODIFERENTE:
     case NOMENOR:
     case NOMENOR_IGUAL:
     case NOMAIOR:
     case NOMAIOR_IGUAL:
-    {
-        Types l = analyze_expression(expr->data.binary.left, scope);
-        Types r = analyze_expression(expr->data.binary.right, scope);
-        if (l != r)
-        {
-            error_message(expr->row, "Comparação entre tipos diferentes.");
-            sem_error = 1;
-        }
-        return TYINT;
-    }
-
+        return check_binary_same(expr, scope, "Comparação entre tipos diferentes.");
     case NOCHAMADA_FUNCAO:
         return analyze_func_call(expr, scope);
 

@@ -22,4 +22,5 @@ typedef struct
 } NodeDictionaryEntry;
 
 const NodeDictionaryEntry *findInfosNode(NSpecies s);
+
 #endif

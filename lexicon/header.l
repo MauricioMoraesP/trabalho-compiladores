@@ -75,7 +75,7 @@ ID       {CAR}({CAR}|{INT}|_)*
 
 
 \"([^"\\\n]|\\.)*$ {
-    fprintf(stderr, "[ERRO LEXICO]: String nao foi finalizada de forma certa em %d\n", yylineno);
+    fprintf(stderr, "[ERRO LEXICO]: String nao foi finalizada de forma certa na linha %d\n", yylineno);
     exit(1);
 }
 

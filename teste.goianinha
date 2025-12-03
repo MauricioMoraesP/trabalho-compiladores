@@ -1,27 +1,14 @@
-
-int fatorial(int n){
-	se (n==0)
-	entao
-		retorne 1;
-	senao
-		retorne n* fatorial(n-1);
+int soma(int a, int b) {
+    retorne a + b;
 }
 
 programa {
-int n;
-n = 1-0;
-enquanto (n<0) execute {
-       escreva "digite 
-                um numero";
-       novalinha;
-       leia n;    
-}	
+    int resultado;
+    car c;
+    c = 'z';
+    
+    resultado = soma(5, c); /*ERRO:PARAMETRO DE CHAMADA (c)POSSUI TIPO DIFERENTE DO PARAMETRO FORMAL b */ 
 
-	escreva "O fatorial
-                  de ";
-	escreva n;
-        escreva " e: ";
-	escreva fatorial(n);
-	novalinha;
-
+    escreva resultado;
+    novalinha;
 }

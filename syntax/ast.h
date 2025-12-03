@@ -9,5 +9,4 @@ Node *create_if_else_node(NSpecies s, int row, Types type, Node *cond, Node *the
 Node *create_nnary_node(NSpecies s, int row, Types type);
 void nnary_add_child(Node *parent, Node *child);
 void free_ast(Node *n);
-
 #endif

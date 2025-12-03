@@ -23,14 +23,11 @@ int convert_type(Types t)
 void error_message(int line, const char *fmt, ...)
 {
     va_list args;
-
-    printf("\n[ERRO SEMÂNTICO] Linha %d: ", line);
-
+    fprintf(stderr, "\n[ERRO SEMÂNTICO] Linha %d: ", line);
     va_start(args, fmt);
-    vprintf(fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
-
-    printf("\n");
+    fprintf(stderr, "\n");
     exit(1);
 }
 

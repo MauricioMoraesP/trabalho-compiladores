@@ -21,7 +21,6 @@ void create_new_scope(SymbolTable **scope)
     new_scope->last_entry = NULL;
     new_scope->entries = NULL;
     new_scope->before_scope = parent;
-    new_scope->next_scope = NULL;
 
     if (parent != NULL)
         new_scope->level = parent->level + 1;
@@ -69,32 +68,27 @@ void remove_current_scope(SymbolTable **scope)
 /* Destroi toda a tabela, liberando todos os escopos e símbolos */
 void destroy_symbol_table(SymbolTable *table)
 {
-    if (!table)
+    if (table == NULL)
         return;
 
     SymbolTable *top = table;
-    while (top->next_scope)
-    {
-        top = top->next_scope;
-    }
-
     while (top)
     {
-        SymbolEntry *curr = top->first_entry;
-        while (curr)
+        SymbolEntry *current = top->first_entry;
+        while (current)
         {
-            SymbolEntry *next = curr->next_symbol;
-            if (curr->lexeme.lex)
-                free(curr->lexeme.lex);
+            SymbolEntry *next = current->next_symbol;
+            if (current->lexeme.lex)
+                free(current->lexeme.lex);
 
-            if (curr->entry == FUN_ENTRY && curr->data.fun_data.param_types)
+            if (current->entry == FUN_ENTRY && current->data.fun_data.param_types)
             {
-                free(curr->data.fun_data.param_types);
-                curr->data.fun_data.param_types = NULL;
+                free(current->data.fun_data.param_types);
+                current->data.fun_data.param_types = NULL;
             }
 
-            free(curr);
-            curr = next;
+            free(current);
+            current = next;
         }
 
         SymbolTable *prev = top->before_scope;
@@ -134,7 +128,7 @@ int insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType
         new_entry->data.var_info.declaration_position = declaration_position;
     }
 
-    if (!scope->first_entry)
+    if (scope->first_entry == NULL)
     {
         scope->first_entry = new_entry;
         scope->entries = new_entry;
@@ -182,13 +176,13 @@ SymbolEntry *table_search_name_in_scope(SymbolTable *scope, char *name)
 /* Busca símbolo subindo a pilha de escopos */
 SymbolEntry *table_search_up(SymbolTable *scope, char *name)
 {
-    SymbolTable *current = scope;
-    while (current != NULL)
+    SymbolTable *currentent = scope;
+    while (currentent != NULL)
     {
-        SymbolEntry *found = table_search_name_in_scope(current, name);
+        SymbolEntry *found = table_search_name_in_scope(currentent, name);
         if (found)
             return found;
-        current = current->before_scope;
+        currentent = currentent->before_scope;
     }
     return NULL;
 }

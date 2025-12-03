@@ -1975,15 +1975,11 @@ yyreturnlab:
 #line 414 "syntax/header.y"
 
 
-/* User C Code */
-
-// Error handling function
 void yyerror(const char *s) {
     error = 1;
     fprintf(stderr, "Erro: Erro sintático na linha %d, próximo a '%s'\n", yylineno, yytext);
 }
 
-// Main function to start the analyzer
 int main(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "Erro: argumento ausente.\n");

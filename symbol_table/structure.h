@@ -61,7 +61,6 @@ typedef struct SymbolTable
     SymbolEntry *entries;             // Ponteiro para todas as entradas de simbolos
     SymbolEntry *first_entry;         // Primeiro simbolo inserido
     SymbolEntry *last_entry;          // Ultimo simbolo inserido
-    struct SymbolTable *next_scope;   // Ponteiro para o proximo escopo
     struct SymbolTable *before_scope; // Ponteiro para o escopo anterior
     int level;                        // Nivel do escopo
 } SymbolTable;

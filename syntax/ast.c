@@ -17,8 +17,7 @@ static Node *new_node_generic(NSpecies s, int row, Types type)
 }
 
 /* Cria nó folha*/
-Node *create_leaf_node(NSpecies s, int row, Types type,
-                       const char *lexeme, int int_val, char car_val)
+Node *create_leaf_node(NSpecies s, int row, Types type, const char *lexeme, int int_val, char car_val)
 {
     Node *n = new_node_generic(s, row, type);
 
@@ -38,8 +37,7 @@ Node *create_unary_node(NSpecies s, int row, Types type, Node *child)
 }
 
 /* Cria nó binário */
-Node *create_binary_node(NSpecies s, int row, Types type,
-                         Node *left, Node *right)
+Node *create_binary_node(NSpecies s, int row, Types type, Node *left, Node *right)
 {
     Node *n = new_node_generic(s, row, type);
     n->data.binary.left = left;
@@ -48,8 +46,7 @@ Node *create_binary_node(NSpecies s, int row, Types type,
 }
 
 /* Cria nó IF/ELSE */
-Node *create_if_else_node(NSpecies s, int row, Types type,
-                          Node *cond, Node *then_b, Node *else_b)
+Node *create_if_else_node(NSpecies s, int row, Types type, Node *cond, Node *then_b, Node *else_b)
 {
     Node *n = new_node_generic(s, row, type);
     n->data.ifelse.condition_node = cond;

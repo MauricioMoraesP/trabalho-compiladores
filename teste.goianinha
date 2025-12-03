@@ -1,12 +1,14 @@
-int x;
-int duplicado(int x) {
-
-    escreva x;
-    retorne 0;
+int soma(int a, int b) {
+    retorne a + b;
 }
 
 programa {
-    int x;
-    x = 2;
-    duplicado(x);
+    int resultado;
+    car c;
+    c = 'z';
+    
+    resultado = soma(5, c); /*ERRO:PARAMETRO DE CHAMADA (c)POSSUI TIPO DIFERENTE DO PARAMETRO FORMAL b */ 
+
+    escreva resultado;
+    novalinha;
 }

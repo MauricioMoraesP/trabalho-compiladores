@@ -8,7 +8,7 @@
 /* Cria um nó genérico */
 static Node *new_node_generic(NSpecies s, int row, Types type)
 {
-    Node *n = helper_malloc(sizeof(Node), "ao criar nó");
+    Node *n = helper_malloc(sizeof(Node), "ao criar no");
     n->species = s;
     n->type = type;
     n->row = row;

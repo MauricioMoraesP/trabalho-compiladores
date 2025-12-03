@@ -90,10 +90,7 @@ DeclFuncVar:
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnary_add_child(func, id);
 
-        Node *params_node = NULL;
-        if ($3 && $3->data.nnary.first) {
-            params_node = $3->data.nnary.first; 
-        }
+        Node *params_node = ($3 && $3->data.nnary.first) ? $3->data.nnary.first : NULL;
         int num_params = 0;
         DataType *param_types = NULL;
         if (params_node && params_node->data.nnary.first) {
@@ -107,16 +104,9 @@ DeclFuncVar:
                 p = p->next;
             }
         }
-        if (global) {
-            insert_function(global, $2,
-                ($1 == TYINT ? INT_TYPE : CAR_TYPE),
-                num_params, param_types);
-        } else {
-            insert_function(current ? current : global, $2,
-                ($1 == TYINT ? INT_TYPE : CAR_TYPE),
-                num_params, param_types);
-        }
-
+        if (global) insert_function(global, $2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),num_params, param_types);
+        else  insert_function(current ? current : global, $2, ($1 == TYINT ? INT_TYPE : CAR_TYPE), num_params, param_types);
+    
         nnary_merge_children(func, $3);
         Node *list = $4 ? $4 : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
         nnary_add_child(list, func);
@@ -149,14 +139,10 @@ DeclFunc:
     ListaParametros TRPAREN Bloco 
     { 
         Node *wrap = create_nnary_node(NOFUNC_COMPONENTS, yylineno, TYVOID);
-        
         Node *params = $3; 
-        if (!params)
-            params = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
-
+        if (!params) params = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
         nnary_add_child(wrap, params);
         nnary_add_child(wrap, $5);  
-
         remove_current_scope(&current);
         $$ = wrap;
     }
@@ -178,14 +164,9 @@ ListaParametros:
 ListaParametrosCont:
      Tipo TID_TOKEN {
          Node *list = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
-
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnary_add_child(list, param);
-
-         if (current) 
-            insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE), declaration_position++);
-         
-
+         if (current)  insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE), declaration_position++);
          $$ = list;
      }
     | Tipo TID_TOKEN TCOMMA ListaParametrosCont {
@@ -193,11 +174,7 @@ ListaParametrosCont:
          Node *list = $4;
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnary_add_child(list, param);
-
-         if (current) 
-              insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
-         
-
+         if (current) insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
          $$ = list;
      }
 ;
@@ -233,18 +210,12 @@ ListaDeclVar:
         Node *decl = create_nnary_node(NODECL_VAR, yylineno, $1);
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnary_add_child(decl, id);
-        if (current) 
-            insert_variable(current,$2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
-        
-
+        if (current) insert_variable(current,$2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
-
             while (child) {
                 Node *next = child->next;
-
                 child->type = $1;
-
                 if (current && child->data.leaf.lexeme) {
                     insert_variable(
                         current,
@@ -253,16 +224,12 @@ ListaDeclVar:
                         declaration_position++
                     );
                 }
-
                 nnary_add_child(decl, child);
                 child = next;
             }
         }
-
         Node *acc = $5 ? $5 : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
-
         nnary_add_child(acc, decl);
-
         $$ = acc;
     }
 ;
@@ -290,7 +257,8 @@ ListaComando:
             nnary_add_child(l, $1); 
             $$ = l; 
         }
-        else { $$ = NULL; }
+        else $$ = NULL;
+
         
     }
 ;
@@ -333,7 +301,6 @@ Comando:
     |TWHILE TLPAREN Expr TRPAREN TEXECUTE Comando
 {
         Node *body;
-
         if ($6->species == NOBLOCO) {
             body = $6;
         } else {
@@ -491,6 +458,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    printf("Sucesso: análise concluída com sucesso.\n");
+    printf("Sucesso: análise concluída com sucesso, livre de erros semânticos e de erros sintáticos.\n");
     return 0;
 }

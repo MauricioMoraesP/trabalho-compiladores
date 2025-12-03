@@ -71,7 +71,7 @@ void analyze_function(Node *func_node, SymbolTable *global_scope)
     if (!func_node)
         return;
 
-    Types old_type = current_function_type;
+    Types type = current_function_type;
 
     current_function_type = func_node->type;
 
@@ -120,7 +120,7 @@ void analyze_function(Node *func_node, SymbolTable *global_scope)
         analyze_command(body_node, &function_scope, current_function_type);
     }
 
-    current_function_type = old_type;
+    current_function_type = type;
 
     remove_current_scope(&global_scope);
 }
@@ -377,7 +377,7 @@ Types analyze_func_call(Node *func, SymbolTable *scope)
         Types formal_t = convert_type(formal[i]);
         if (arg_t != formal_t)
         {
-            error_message(func->row, "Tipo do argumento %d da funcao '%s' imcopativel.", i + 1, func_name);
+            error_message(func->row, "Tipo do argumento %d da funcao '%s' incompativel.", i + 1, func_name);
             sem_error = 1;
         }
         i++;

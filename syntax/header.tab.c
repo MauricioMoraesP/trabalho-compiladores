@@ -578,13 +578,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    66,    66,    77,    88,   125,   131,   136,   143,   148,
-     148,   169,   173,   179,   191,   207,   206,   227,   231,   273,
-     274,   278,   287,   300,   303,   306,   309,   315,   318,   324,
-     327,   330,   333,   348,   353,   357,   365,   366,   370,   371,
-     375,   376,   377,   381,   382,   383,   384,   385,   389,   390,
-     391,   395,   396,   397,   401,   402,   403,   408,   416,   422,
-     425,   428,   431,   435,   440
+       0,    66,    66,    77,    88,   115,   121,   126,   133,   138,
+     138,   155,   159,   165,   172,   184,   183,   204,   208,   240,
+     241,   245,   254,   268,   271,   274,   277,   283,   286,   292,
+     295,   298,   301,   315,   320,   324,   332,   333,   337,   338,
+     342,   343,   344,   348,   349,   350,   351,   352,   356,   357,
+     358,   362,   363,   364,   368,   369,   370,   375,   383,   389,
+     392,   395,   398,   402,   407
 };
 #endif
 
@@ -1265,10 +1265,7 @@ yyreduce:
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, (yyvsp[-3].type), (yyvsp[-2].str), 0, 0);
         nnary_add_child(func, id);
 
-        Node *params_node = NULL;
-        if ((yyvsp[-1].n) && (yyvsp[-1].n)->data.nnary.first) {
-            params_node = (yyvsp[-1].n)->data.nnary.first; 
-        }
+        Node *params_node = ((yyvsp[-1].n) && (yyvsp[-1].n)->data.nnary.first) ? (yyvsp[-1].n)->data.nnary.first : NULL;
         int num_params = 0;
         DataType *param_types = NULL;
         if (params_node && params_node->data.nnary.first) {
@@ -1282,38 +1279,31 @@ yyreduce:
                 p = p->next;
             }
         }
-        if (global) {
-            insert_function(global, (yyvsp[-2].str),
-                ((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),
-                num_params, param_types);
-        } else {
-            insert_function(current ? current : global, (yyvsp[-2].str),
-                ((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),
-                num_params, param_types);
-        }
-
+        if (global) insert_function(global, (yyvsp[-2].str), ((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),num_params, param_types);
+        else  insert_function(current ? current : global, (yyvsp[-2].str), ((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE), num_params, param_types);
+    
         nnary_merge_children(func, (yyvsp[-1].n));
         Node *list = (yyvsp[0].n) ? (yyvsp[0].n) : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
         nnary_add_child(list, func);
         (yyval.n) = list;
     }
-#line 1301 "syntax/header.tab.c"
+#line 1291 "syntax/header.tab.c"
     break;
 
   case 5: /* DeclFuncVar: %empty  */
-#line 125 "syntax/header.y"
+#line 115 "syntax/header.y"
               { (yyval.n) = NULL; }
-#line 1307 "syntax/header.tab.c"
+#line 1297 "syntax/header.tab.c"
     break;
 
   case 6: /* DeclProg: TPROGRAM Bloco  */
-#line 131 "syntax/header.y"
+#line 121 "syntax/header.y"
                    { (yyval.n) = (yyvsp[0].n); }
-#line 1313 "syntax/header.tab.c"
+#line 1303 "syntax/header.tab.c"
     break;
 
   case 7: /* DeclVar: TCOMMA TID_TOKEN DeclVar  */
-#line 136 "syntax/header.y"
+#line 126 "syntax/header.y"
                              {
         Node *id_node = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);
         Node *list = create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
@@ -1321,100 +1311,87 @@ yyreduce:
         nnary_merge_children(list, (yyvsp[0].n));
         (yyval.n) = list;
     }
-#line 1325 "syntax/header.tab.c"
+#line 1315 "syntax/header.tab.c"
     break;
 
   case 8: /* DeclVar: %empty  */
-#line 143 "syntax/header.y"
+#line 133 "syntax/header.y"
              { (yyval.n) = NULL; }
-#line 1331 "syntax/header.tab.c"
+#line 1321 "syntax/header.tab.c"
     break;
 
   case 9: /* $@1: %empty  */
-#line 148 "syntax/header.y"
+#line 138 "syntax/header.y"
             { create_new_scope(&current); declaration_position = 0; }
-#line 1337 "syntax/header.tab.c"
+#line 1327 "syntax/header.tab.c"
     break;
 
   case 10: /* DeclFunc: TLPAREN $@1 ListaParametros TRPAREN Bloco  */
-#line 150 "syntax/header.y"
+#line 140 "syntax/header.y"
     { 
         Node *wrap = create_nnary_node(NOFUNC_COMPONENTS, yylineno, TYVOID);
-        
         Node *params = (yyvsp[-2].n); 
-        if (!params)
-            params = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
-
+        if (!params) params = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
         nnary_add_child(wrap, params);
         nnary_add_child(wrap, (yyvsp[0].n));  
-
         remove_current_scope(&current);
         (yyval.n) = wrap;
     }
-#line 1355 "syntax/header.tab.c"
+#line 1341 "syntax/header.tab.c"
     break;
 
   case 11: /* ListaParametros: %empty  */
-#line 169 "syntax/header.y"
+#line 155 "syntax/header.y"
             {
          (yyval.n) = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
      }
-#line 1363 "syntax/header.tab.c"
+#line 1349 "syntax/header.tab.c"
     break;
 
   case 12: /* ListaParametros: ListaParametrosCont  */
-#line 173 "syntax/header.y"
+#line 159 "syntax/header.y"
                          {
          (yyval.n) = (yyvsp[0].n);
      }
-#line 1371 "syntax/header.tab.c"
+#line 1357 "syntax/header.tab.c"
     break;
 
   case 13: /* ListaParametrosCont: Tipo TID_TOKEN  */
-#line 179 "syntax/header.y"
+#line 165 "syntax/header.y"
                     {
          Node *list = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
-
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, (yyvsp[-1].type), (yyvsp[0].str), 0, 0);
          nnary_add_child(list, param);
-
-         if (current) 
-            insert_parameter(current, (yyvsp[0].str),((yyvsp[-1].type) == TYINT ? INT_TYPE : CAR_TYPE), declaration_position++);
-         
-
+         if (current)  insert_parameter(current, (yyvsp[0].str),((yyvsp[-1].type) == TYINT ? INT_TYPE : CAR_TYPE), declaration_position++);
          (yyval.n) = list;
      }
-#line 1388 "syntax/header.tab.c"
+#line 1369 "syntax/header.tab.c"
     break;
 
   case 14: /* ListaParametrosCont: Tipo TID_TOKEN TCOMMA ListaParametrosCont  */
-#line 191 "syntax/header.y"
+#line 172 "syntax/header.y"
                                                 {
 
          Node *list = (yyvsp[0].n);
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, (yyvsp[-3].type), (yyvsp[-2].str), 0, 0);
          nnary_add_child(list, param);
-
-         if (current) 
-              insert_parameter(current, (yyvsp[-2].str),((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
-         
-
+         if (current) insert_parameter(current, (yyvsp[-2].str),((yyvsp[-3].type) == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
          (yyval.n) = list;
      }
-#line 1405 "syntax/header.tab.c"
+#line 1382 "syntax/header.tab.c"
     break;
 
   case 15: /* $@2: %empty  */
-#line 207 "syntax/header.y"
+#line 184 "syntax/header.y"
     {
         create_new_scope(&current);
         declaration_position = 0;
     }
-#line 1414 "syntax/header.tab.c"
+#line 1391 "syntax/header.tab.c"
     break;
 
   case 16: /* Bloco: TLBRACE $@2 ListaDeclVar ListaComando TRBRACE  */
-#line 214 "syntax/header.y"
+#line 191 "syntax/header.y"
     {
         remove_current_scope(&current);
         Node *bloco = create_nnary_node(NOBLOCO, yylineno, TYVOID);
@@ -1422,35 +1399,29 @@ yyreduce:
         nnary_merge_children(bloco, (yyvsp[-1].n));
         (yyval.n) = bloco;
     }
-#line 1426 "syntax/header.tab.c"
+#line 1403 "syntax/header.tab.c"
     break;
 
   case 17: /* ListaDeclVar: %empty  */
-#line 227 "syntax/header.y"
+#line 204 "syntax/header.y"
            {
         (yyval.n) = create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
     }
-#line 1434 "syntax/header.tab.c"
+#line 1411 "syntax/header.tab.c"
     break;
 
   case 18: /* ListaDeclVar: Tipo TID_TOKEN DeclVar TSEMICOLON ListaDeclVar  */
-#line 232 "syntax/header.y"
+#line 209 "syntax/header.y"
     {
         Node *decl = create_nnary_node(NODECL_VAR, yylineno, (yyvsp[-4].type));
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, (yyvsp[-4].type), (yyvsp[-3].str), 0, 0);
         nnary_add_child(decl, id);
-        if (current) 
-            insert_variable(current,(yyvsp[-3].str), ((yyvsp[-4].type) == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
-        
-
+        if (current) insert_variable(current,(yyvsp[-3].str), ((yyvsp[-4].type) == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
         if ((yyvsp[-2].n) && (yyvsp[-2].n)->data.nnary.first) {
             Node *child = (yyvsp[-2].n)->data.nnary.first;
-
             while (child) {
                 Node *next = child->next;
-
                 child->type = (yyvsp[-4].type);
-
                 if (current && child->data.leaf.lexeme) {
                     insert_variable(
                         current,
@@ -1459,35 +1430,31 @@ yyreduce:
                         declaration_position++
                     );
                 }
-
                 nnary_add_child(decl, child);
                 child = next;
             }
         }
-
         Node *acc = (yyvsp[0].n) ? (yyvsp[0].n) : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
-
         nnary_add_child(acc, decl);
-
         (yyval.n) = acc;
     }
-#line 1475 "syntax/header.tab.c"
+#line 1442 "syntax/header.tab.c"
     break;
 
   case 19: /* Tipo: TINT  */
-#line 273 "syntax/header.y"
+#line 240 "syntax/header.y"
          { (yyval.type) = TYINT; }
-#line 1481 "syntax/header.tab.c"
+#line 1448 "syntax/header.tab.c"
     break;
 
   case 20: /* Tipo: TCAR  */
-#line 274 "syntax/header.y"
+#line 241 "syntax/header.y"
            { (yyval.type) = TYCAR; }
-#line 1487 "syntax/header.tab.c"
+#line 1454 "syntax/header.tab.c"
     break;
 
   case 21: /* ListaComando: ListaComando Comando  */
-#line 278 "syntax/header.y"
+#line 245 "syntax/header.y"
                          {
         if ((yyvsp[0].n) == NULL) { (yyval.n) = (yyvsp[-1].n); } 
         else if ((yyvsp[-1].n) != NULL) { nnary_add_child((yyvsp[-1].n), (yyvsp[0].n)); (yyval.n) = (yyvsp[-1].n); } 
@@ -1497,88 +1464,88 @@ yyreduce:
             (yyval.n) = l; 
         }
     }
-#line 1501 "syntax/header.tab.c"
+#line 1468 "syntax/header.tab.c"
     break;
 
   case 22: /* ListaComando: Comando  */
-#line 287 "syntax/header.y"
+#line 254 "syntax/header.y"
               {
         if ((yyvsp[0].n) != NULL) { 
             Node *l = create_nnary_node(NOLISTA_COMANDOS, yylineno, TYVOID); 
             nnary_add_child(l, (yyvsp[0].n)); 
             (yyval.n) = l; 
         }
-        else { (yyval.n) = NULL; }
+        else (yyval.n) = NULL;
+
         
     }
-#line 1515 "syntax/header.tab.c"
+#line 1483 "syntax/header.tab.c"
     break;
 
   case 23: /* Comando: TSEMICOLON  */
-#line 301 "syntax/header.y"
+#line 269 "syntax/header.y"
         { (yyval.n) = NULL; }
-#line 1521 "syntax/header.tab.c"
+#line 1489 "syntax/header.tab.c"
     break;
 
   case 24: /* Comando: Expr TSEMICOLON  */
-#line 304 "syntax/header.y"
+#line 272 "syntax/header.y"
         { (yyval.n) = (yyvsp[-1].n); }
-#line 1527 "syntax/header.tab.c"
+#line 1495 "syntax/header.tab.c"
     break;
 
   case 25: /* Comando: TRETURN Expr TSEMICOLON  */
-#line 307 "syntax/header.y"
+#line 275 "syntax/header.y"
         { (yyval.n) = create_unary_node(NORETURN, yylineno, TYVOID, (yyvsp[-1].n)); }
-#line 1533 "syntax/header.tab.c"
+#line 1501 "syntax/header.tab.c"
     break;
 
   case 26: /* Comando: TREAD TID_TOKEN TSEMICOLON  */
-#line 310 "syntax/header.y"
+#line 278 "syntax/header.y"
         {
             Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);            
             (yyval.n) = create_unary_node(NOREAD, yylineno, TYVOID, id);
         }
-#line 1542 "syntax/header.tab.c"
+#line 1510 "syntax/header.tab.c"
     break;
 
   case 27: /* Comando: TWRITE Expr TSEMICOLON  */
-#line 316 "syntax/header.y"
+#line 284 "syntax/header.y"
         { (yyval.n) = create_unary_node(NOWRITE, yylineno, TYVOID, (yyvsp[-1].n)); }
-#line 1548 "syntax/header.tab.c"
+#line 1516 "syntax/header.tab.c"
     break;
 
   case 28: /* Comando: TWRITE TSTRING_LITERAL TSEMICOLON  */
-#line 319 "syntax/header.y"
+#line 287 "syntax/header.y"
         {
             Node *str = create_leaf_node(NOSTRING_LITERAL, yylineno, TYVOID, (yyvsp[-1].str), 0, 0);            
             (yyval.n) = create_unary_node(NOWRITE_LITERAL, yylineno, TYVOID, str);
         }
-#line 1557 "syntax/header.tab.c"
+#line 1525 "syntax/header.tab.c"
     break;
 
   case 29: /* Comando: TNEWLINE TSEMICOLON  */
-#line 325 "syntax/header.y"
+#line 293 "syntax/header.y"
         { (yyval.n) = create_nnary_node(NONEWLINE, yylineno, TYVOID); }
-#line 1563 "syntax/header.tab.c"
+#line 1531 "syntax/header.tab.c"
     break;
 
   case 30: /* Comando: TIF TLPAREN Expr TRPAREN TTHEN Comando  */
-#line 328 "syntax/header.y"
+#line 296 "syntax/header.y"
         { (yyval.n) = create_binary_node(NOIF, yylineno, TYVOID, (yyvsp[-3].n), (yyvsp[0].n)); }
-#line 1569 "syntax/header.tab.c"
+#line 1537 "syntax/header.tab.c"
     break;
 
   case 31: /* Comando: TIF TLPAREN Expr TRPAREN TTHEN Comando TELSE Comando  */
-#line 331 "syntax/header.y"
+#line 299 "syntax/header.y"
         { (yyval.n) = create_if_else_node(NOIF_ELSE, yylineno, TYVOID, (yyvsp[-5].n), (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1575 "syntax/header.tab.c"
+#line 1543 "syntax/header.tab.c"
     break;
 
   case 32: /* Comando: TWHILE TLPAREN Expr TRPAREN TEXECUTE Comando  */
-#line 334 "syntax/header.y"
+#line 302 "syntax/header.y"
 {
         Node *body;
-
         if ((yyvsp[0].n)->species == NOBLOCO) {
             body = (yyvsp[0].n);
         } else {
@@ -1588,159 +1555,159 @@ yyreduce:
 
         (yyval.n) = create_binary_node(NOWHILE, yylineno, TYVOID, (yyvsp[-3].n), body);
     }
-#line 1592 "syntax/header.tab.c"
+#line 1559 "syntax/header.tab.c"
     break;
 
   case 33: /* Comando: Bloco  */
-#line 349 "syntax/header.y"
+#line 316 "syntax/header.y"
         { (yyval.n) = (yyvsp[0].n); }
-#line 1598 "syntax/header.tab.c"
+#line 1565 "syntax/header.tab.c"
     break;
 
   case 34: /* Expr: OrExpr  */
-#line 354 "syntax/header.y"
+#line 321 "syntax/header.y"
         {
             (yyval.n) = (yyvsp[0].n);
         }
-#line 1606 "syntax/header.tab.c"
+#line 1573 "syntax/header.tab.c"
     break;
 
   case 35: /* Expr: TID_TOKEN TASSIGN Expr  */
-#line 358 "syntax/header.y"
+#line 325 "syntax/header.y"
         {
             (yyval.n) = create_binary_node(NOATRIBUICAO, yylineno, TYVOID, create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-2].str), 0, 0), (yyvsp[0].n));            
         }
-#line 1614 "syntax/header.tab.c"
+#line 1581 "syntax/header.tab.c"
     break;
 
   case 36: /* OrExpr: OrExpr TOR AndExpr  */
-#line 365 "syntax/header.y"
+#line 332 "syntax/header.y"
                        { (yyval.n) = create_binary_node(NOOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1620 "syntax/header.tab.c"
+#line 1587 "syntax/header.tab.c"
     break;
 
   case 37: /* OrExpr: AndExpr  */
-#line 366 "syntax/header.y"
+#line 333 "syntax/header.y"
               { (yyval.n) = (yyvsp[0].n); }
-#line 1626 "syntax/header.tab.c"
+#line 1593 "syntax/header.tab.c"
     break;
 
   case 38: /* AndExpr: AndExpr TAND EqExpr  */
-#line 370 "syntax/header.y"
+#line 337 "syntax/header.y"
                         { (yyval.n) = create_binary_node(NOAND, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1632 "syntax/header.tab.c"
+#line 1599 "syntax/header.tab.c"
     break;
 
   case 39: /* AndExpr: EqExpr  */
-#line 371 "syntax/header.y"
+#line 338 "syntax/header.y"
              { (yyval.n) = (yyvsp[0].n); }
-#line 1638 "syntax/header.tab.c"
+#line 1605 "syntax/header.tab.c"
     break;
 
   case 40: /* EqExpr: EqExpr TEQ DesignExpr  */
-#line 375 "syntax/header.y"
+#line 342 "syntax/header.y"
                           { (yyval.n) = create_binary_node(NOIGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1644 "syntax/header.tab.c"
+#line 1611 "syntax/header.tab.c"
     break;
 
   case 41: /* EqExpr: EqExpr TNEQ DesignExpr  */
-#line 376 "syntax/header.y"
+#line 343 "syntax/header.y"
                              { (yyval.n) = create_binary_node(NODIFERENTE, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1650 "syntax/header.tab.c"
+#line 1617 "syntax/header.tab.c"
     break;
 
   case 42: /* EqExpr: DesignExpr  */
-#line 377 "syntax/header.y"
+#line 344 "syntax/header.y"
                  { (yyval.n) = (yyvsp[0].n); }
-#line 1656 "syntax/header.tab.c"
+#line 1623 "syntax/header.tab.c"
     break;
 
   case 43: /* DesignExpr: DesignExpr TLT AddExpr  */
-#line 381 "syntax/header.y"
+#line 348 "syntax/header.y"
                            { (yyval.n) = create_binary_node(NOMENOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1662 "syntax/header.tab.c"
+#line 1629 "syntax/header.tab.c"
     break;
 
   case 44: /* DesignExpr: DesignExpr TGT AddExpr  */
-#line 382 "syntax/header.y"
+#line 349 "syntax/header.y"
                              { (yyval.n) = create_binary_node(NOMAIOR, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1668 "syntax/header.tab.c"
+#line 1635 "syntax/header.tab.c"
     break;
 
   case 45: /* DesignExpr: DesignExpr TGEQ AddExpr  */
-#line 383 "syntax/header.y"
+#line 350 "syntax/header.y"
                               { (yyval.n) = create_binary_node(NOMAIOR_IGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1674 "syntax/header.tab.c"
+#line 1641 "syntax/header.tab.c"
     break;
 
   case 46: /* DesignExpr: DesignExpr TLEQ AddExpr  */
-#line 384 "syntax/header.y"
+#line 351 "syntax/header.y"
                               { (yyval.n) = create_binary_node(NOMENOR_IGUAL, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1680 "syntax/header.tab.c"
+#line 1647 "syntax/header.tab.c"
     break;
 
   case 47: /* DesignExpr: AddExpr  */
-#line 385 "syntax/header.y"
+#line 352 "syntax/header.y"
               { (yyval.n) = (yyvsp[0].n); }
-#line 1686 "syntax/header.tab.c"
+#line 1653 "syntax/header.tab.c"
     break;
 
   case 48: /* AddExpr: AddExpr TPLUS MulExpr  */
-#line 389 "syntax/header.y"
+#line 356 "syntax/header.y"
                           { (yyval.n) = create_binary_node(NOSOMA, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1692 "syntax/header.tab.c"
+#line 1659 "syntax/header.tab.c"
     break;
 
   case 49: /* AddExpr: AddExpr TMINUS MulExpr  */
-#line 390 "syntax/header.y"
+#line 357 "syntax/header.y"
                              { (yyval.n) = create_binary_node(NOSUBTRACAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1698 "syntax/header.tab.c"
+#line 1665 "syntax/header.tab.c"
     break;
 
   case 50: /* AddExpr: MulExpr  */
-#line 391 "syntax/header.y"
+#line 358 "syntax/header.y"
               { (yyval.n) = (yyvsp[0].n); }
-#line 1704 "syntax/header.tab.c"
+#line 1671 "syntax/header.tab.c"
     break;
 
   case 51: /* MulExpr: MulExpr TTIMES UnExpr  */
-#line 395 "syntax/header.y"
+#line 362 "syntax/header.y"
                           { (yyval.n) = create_binary_node(NOMULTIPLICACAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1710 "syntax/header.tab.c"
+#line 1677 "syntax/header.tab.c"
     break;
 
   case 52: /* MulExpr: MulExpr TDIVIDE UnExpr  */
-#line 396 "syntax/header.y"
+#line 363 "syntax/header.y"
                              { (yyval.n) = create_binary_node(NODIVISAO, yylineno, TYINT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1716 "syntax/header.tab.c"
+#line 1683 "syntax/header.tab.c"
     break;
 
   case 53: /* MulExpr: UnExpr  */
-#line 397 "syntax/header.y"
+#line 364 "syntax/header.y"
              { (yyval.n) = (yyvsp[0].n); }
-#line 1722 "syntax/header.tab.c"
+#line 1689 "syntax/header.tab.c"
     break;
 
   case 54: /* UnExpr: TMINUS PrimExpr  */
-#line 401 "syntax/header.y"
+#line 368 "syntax/header.y"
                     { (yyval.n) = create_unary_node(NOMENOS_UNARIO, yylineno, TYINT, (yyvsp[0].n)); }
-#line 1728 "syntax/header.tab.c"
+#line 1695 "syntax/header.tab.c"
     break;
 
   case 55: /* UnExpr: TNEG PrimExpr  */
-#line 402 "syntax/header.y"
+#line 369 "syntax/header.y"
                     { (yyval.n) = create_unary_node(NONEGACAO, yylineno, TYINT, (yyvsp[0].n)); }
-#line 1734 "syntax/header.tab.c"
+#line 1701 "syntax/header.tab.c"
     break;
 
   case 56: /* UnExpr: PrimExpr  */
-#line 403 "syntax/header.y"
+#line 370 "syntax/header.y"
                { (yyval.n) = (yyvsp[0].n); }
-#line 1740 "syntax/header.tab.c"
+#line 1707 "syntax/header.tab.c"
     break;
 
   case 57: /* PrimExpr: TID_TOKEN TLPAREN ListExpr TRPAREN  */
-#line 408 "syntax/header.y"
+#line 375 "syntax/header.y"
                                        {
     Node *call = create_nnary_node(NOCHAMADA_FUNCAO, yylineno, TYVOID);
     Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-3].str), 0, 0);
@@ -1748,71 +1715,71 @@ yyreduce:
     nnary_merge_children(call, (yyvsp[-1].n));
     (yyval.n) = call;
 }
-#line 1752 "syntax/header.tab.c"
+#line 1719 "syntax/header.tab.c"
     break;
 
   case 58: /* PrimExpr: TID_TOKEN TLPAREN TRPAREN  */
-#line 416 "syntax/header.y"
+#line 383 "syntax/header.y"
                                 {
         Node *call = create_nnary_node(NOCHAMADA_FUNCAO, yylineno, TYVOID);
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[-2].str), 0, 0);
         nnary_add_child(call, id);
         (yyval.n) = call;
       }
-#line 1763 "syntax/header.tab.c"
+#line 1730 "syntax/header.tab.c"
     break;
 
   case 59: /* PrimExpr: TID_TOKEN  */
-#line 422 "syntax/header.y"
+#line 389 "syntax/header.y"
                 {
         (yyval.n) = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, (yyvsp[0].str), 0, 0);        
       }
-#line 1771 "syntax/header.tab.c"
+#line 1738 "syntax/header.tab.c"
     break;
 
   case 60: /* PrimExpr: TCHAR_CONST  */
-#line 425 "syntax/header.y"
+#line 392 "syntax/header.y"
                   {
         (yyval.n) = create_leaf_node(NOCAR_CONST, yylineno, TYCAR, NULL, 0, (yyvsp[0].cval));
       }
-#line 1779 "syntax/header.tab.c"
+#line 1746 "syntax/header.tab.c"
     break;
 
   case 61: /* PrimExpr: TINT_CONST  */
-#line 428 "syntax/header.y"
+#line 395 "syntax/header.y"
                  {
         (yyval.n) = create_leaf_node(NOINT_CONST, yylineno, TYINT, NULL, (yyvsp[0].ival), 0);
       }
-#line 1787 "syntax/header.tab.c"
+#line 1754 "syntax/header.tab.c"
     break;
 
   case 62: /* PrimExpr: TLPAREN Expr TRPAREN  */
-#line 431 "syntax/header.y"
+#line 398 "syntax/header.y"
                            { (yyval.n) = (yyvsp[-1].n); }
-#line 1793 "syntax/header.tab.c"
+#line 1760 "syntax/header.tab.c"
     break;
 
   case 63: /* ListExpr: Expr  */
-#line 435 "syntax/header.y"
+#line 402 "syntax/header.y"
          {
         Node *l = create_nnary_node(NOLISTA_EXPR, yylineno, TYVOID);
         nnary_add_child(l, (yyvsp[0].n));
         (yyval.n) = l;
       }
-#line 1803 "syntax/header.tab.c"
+#line 1770 "syntax/header.tab.c"
     break;
 
   case 64: /* ListExpr: ListExpr TCOMMA Expr  */
-#line 440 "syntax/header.y"
+#line 407 "syntax/header.y"
                            {
         nnary_add_child((yyvsp[-2].n), (yyvsp[0].n));
         (yyval.n) = (yyvsp[-2].n);
       }
-#line 1812 "syntax/header.tab.c"
+#line 1779 "syntax/header.tab.c"
     break;
 
 
-#line 1816 "syntax/header.tab.c"
+#line 1783 "syntax/header.tab.c"
 
       default: break;
     }
@@ -2005,7 +1972,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 447 "syntax/header.y"
+#line 414 "syntax/header.y"
 
 
 /* User C Code */
@@ -2042,17 +2009,17 @@ int main(int argc, char **argv) {
             free_ast(root);
             root = NULL;
         }
-        fprintf(stderr, "Falha: foram encontrados erros sintáticos.\n");
+        fprintf(stderr, "Falha: foram encontrados erros SINTÁTICO.\n");
         return 1;
     }
 
    
-    if (error) {
+    if (sem_error) {
         fprintf(stderr,
-                "Sucesso: análise foi concluída, mas foram encontrados erros semânticos.\n");
+                "Sucesso: análise foi concluída, mas foram encontrados erros SEMÂNTICO.\n");
         return 1;
     }
 
-    printf("Sucesso: análise concluída com sucesso.\n");
+    printf("Sucesso: análise concluída com sucesso, livre de erros semânticos e de erros sintáticos.\n");
     return 0;
 }

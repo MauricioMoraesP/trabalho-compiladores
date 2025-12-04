@@ -137,7 +137,7 @@ SymbolEntry *table_search_name(SymbolTable *scope, char *name)
 }
 
 /* Busca símbolo subindo a pilha de escopos */
-SymbolEntry *table_search_up(SymbolTable *scope, char *name)
+SymbolEntry *table_search_above(SymbolTable *scope, char *name)
 {
     SymbolTable *current = scope;
     while (current != NULL)

@@ -158,7 +158,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
                     SymbolEntry *found = NULL;
 
                     if ((*scope)->before_scope)
-                        found = table_search_up((*scope)->before_scope, name);
+                        found = table_search_above((*scope)->before_scope, name);
 
                     if (found && found->entry == PARAM_ENTRY)
                         error_message(decl->row, "Varivel tem o mesmo nome do parametro:'%s' .", name);
@@ -229,7 +229,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
             error_message(cmd->row, "Comando 'leia' com argumento invalido.");
             break;
         }
-        SymbolEntry *s = table_search_up(*scope, id->data.leaf.lexeme);
+        SymbolEntry *s = table_search_above(*scope, id->data.leaf.lexeme);
         if (!s)
         {
             error_message(id->row, "Variavel '%s' nao foi declarada.", id->data.leaf.lexeme);
@@ -261,7 +261,7 @@ Types analyze_expression(Node *expression, SymbolTable *scope)
 
     case NOIDENTIFICADOR:
     {
-        SymbolEntry *symbol = table_search_up(scope, expression->data.leaf.lexeme);
+        SymbolEntry *symbol = table_search_above(scope, expression->data.leaf.lexeme);
         if (!symbol)
         {
             error_message(expression->row, "Identificador '%s' nao foi declaro.", expression->data.leaf.lexeme);
@@ -309,7 +309,7 @@ Types analyze_func_call(Node *func, SymbolTable *scope)
     }
 
     char *func_name = first_node->data.leaf.lexeme;
-    SymbolEntry *symbol = table_search_up(scope, func_name);
+    SymbolEntry *symbol = table_search_above(scope, func_name);
     if (!symbol)
     {
         error_message(func->row, "Funcao '%s' não declarada.", func_name);

@@ -97,7 +97,7 @@ Types analyze_atribuition(Node *atr, SymbolTable *scope)
         return TYVOID;
     }
 
-    SymbolEntry *sym = table_search_up(scope, left->data.leaf.lexeme);
+    SymbolEntry *sym = table_search_above(scope, left->data.leaf.lexeme);
     if (!sym)
     {
         error_message(atr->row, "Variavel '%s' nao foi declarada.", left->data.leaf.lexeme);

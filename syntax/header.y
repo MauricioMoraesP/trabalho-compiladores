@@ -111,7 +111,7 @@ DeclFuncVar:
         nnary_add_child(list, func);
         $$ = list;
     }
-     | %empty { $$ = NULL; }
+     | /* epsilon */ { $$ = NULL; }
 
 ;
 
@@ -129,7 +129,7 @@ DeclVar:
         nnary_merge_children(list, $3);
         $$ = list;
     }
-    | %empty { $$ = NULL; }
+    | /* epsilon */ { $$ = NULL; }
 ;
 
 
@@ -151,7 +151,7 @@ DeclFunc:
 
 
 ListaParametros:
-     %empty {
+     /* epsilon */ {
          $$ = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
      }
     |
@@ -196,11 +196,8 @@ Bloco:
     }
 ;
 
-
-
-
 ListaDeclVar:
-    %empty {
+    /* epsilon */ {
         $$ = create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
     }
     |

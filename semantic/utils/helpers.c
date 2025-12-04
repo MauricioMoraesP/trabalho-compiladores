@@ -6,7 +6,7 @@
 #include "helpers.h"
 
 /*Converte o tipo interno Types para o tipo inteiro da tabela de símbolos*/
-int convert_type(Types t)
+int helper_convert_type(Types t)
 {
 
     switch (t)
@@ -21,7 +21,7 @@ int convert_type(Types t)
 }
 
 /*Imprime mensagem de erro semântico com número da linha e outros argumentos quando necessário*/
-void error_message(int line, const char *fmt, ...)
+void helper_error_message(int line, const char *fmt, ...)
 {
     va_list args;
     fprintf(stderr, "[ERRO SEMÂNTICO] Linha %d: ", line);
@@ -32,7 +32,7 @@ void error_message(int line, const char *fmt, ...)
     sem_error = 1;
 }
 /*Verifica se a tabela de símbolos foi inicializada*/
-void validation_null_table(SymbolTable *table)
+void helper_validation_null_table(SymbolTable *table)
 {
     if (table == NULL)
     {
@@ -42,7 +42,7 @@ void validation_null_table(SymbolTable *table)
 }
 
 /*Verifica se ambos os operandos de uma expressão binária são inteiros*/
-Types check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
+Types helper_check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
 {
     Types left = analyze_expression(expr->data.binary.left, scope);
     Types right = analyze_expression(expr->data.binary.right, scope);
@@ -50,9 +50,9 @@ Types check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
     if (left != TYINT || right != TYINT)
     {
         if (left == TYCAR || right == TYCAR)
-            error_message(expr->row, "Expressao combina tipos distintos.");
+            helper_error_message(expr->row, "Expressao combina tipos distintos.");
         else
-            error_message(expr->row, "%s", msg);
+            helper_error_message(expr->row, "%s", msg);
 
         sem_error = 1;
         return TYVOID;
@@ -60,39 +60,39 @@ Types check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
     return TYINT;
 }
 /*Verifica se ambos os operandos de uma expressão binária têm o mesmo tipo*/
-Types check_binary_same(Node *expr, SymbolTable *scope, const char *msg)
+Types helper_check_binary_same(Node *expr, SymbolTable *scope, const char *msg)
 {
     Types l = analyze_expression(expr->data.binary.left, scope);
     Types r = analyze_expression(expr->data.binary.right, scope);
 
     if (l != r)
     {
-        error_message(expr->row, msg);
+        helper_error_message(expr->row, msg);
         sem_error = 1;
     }
     return TYINT;
 }
 /*Verifica se a expressão é do tipo inteiro*/
-Types type_is_int(Node *expr, SymbolTable *scope, const char *msg)
+Types helper_type_is_int(Node *expr, SymbolTable *scope, const char *msg)
 {
     Types type = analyze_expression(expr, scope);
     if (type != TYINT)
     {
-        error_message(expr->row, "%s", msg);
+        helper_error_message(expr->row, "%s", msg);
         sem_error = 1;
     }
     return type;
 }
 
 /*Analisa uma atribuição e verifica se os tipos são compatíveis*/
-Types analyze_atribuition(Node *atr, SymbolTable *scope)
+Types helper_analyze_atribuition(Node *atr, SymbolTable *scope)
 {
     Node *left = atr->data.binary.left;
     Node *right = atr->data.binary.right;
 
     if (!left || left->species != NOIDENTIFICADOR)
     {
-        error_message(atr->row, "Lado esquerdo nao corresponde ao tipo do identificador.");
+        helper_error_message(atr->row, "Lado esquerdo nao corresponde ao tipo do identificador.");
         sem_error = 1;
         return TYVOID;
     }
@@ -100,17 +100,17 @@ Types analyze_atribuition(Node *atr, SymbolTable *scope)
     SymbolEntry *sym = table_search_above(scope, left->data.leaf.lexeme);
     if (!sym)
     {
-        error_message(atr->row, "Variavel '%s' nao foi declarada.", left->data.leaf.lexeme);
+        helper_error_message(atr->row, "Variavel '%s' nao foi declarada.", left->data.leaf.lexeme);
         sem_error = 1;
         return TYVOID;
     }
 
     Types right_type = analyze_expression(right, scope);
-    Types left_type = convert_type(sym->type);
+    Types left_type = helper_convert_type(sym->type);
 
     if (right_type != left_type)
     {
-        error_message(atr->row, "Tipos incompativeis para a atribuicao '%s'.", left->data.leaf.lexeme);
+        helper_error_message(atr->row, "Tipos incompativeis para a atribuicao '%s'.", left->data.leaf.lexeme);
         sem_error = 1;
     }
 

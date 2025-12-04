@@ -10,11 +10,11 @@ typedef enum
     FROM_DATATYPE
 } ConvertDirection;
 
-int convert_type(Types t);
-void error_message(int line, const char *fmt, ...);
-void validation_null_table(SymbolTable *table);
-Types require_int(Node *expr, SymbolTable *scope, const char *msg);
-Types check_binary_same(Node *expr, SymbolTable *scope, const char *msg);
-Types check_binary_int(Node *expr, SymbolTable *scope, const char *msg);
-Types analyze_assignment(Node *assign, SymbolTable *scope);
+int helper_convert_type(Types t);
+void helper_error_message(int line, const char *fmt, ...);
+void helper_validation_null_table(SymbolTable *table);
+Types helper_type_is_int(Node *expr, SymbolTable *scope, const char *msg);
+Types helper_check_binary_same(Node *expr, SymbolTable *scope, const char *msg);
+Types helper_check_binary_int(Node *expr, SymbolTable *scope, const char *msg);
+Types helper_analyze_atribuition(Node *assign, SymbolTable *scope);
 #endif

@@ -374,8 +374,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 46
-#define YY_END_OF_BUFFER 47
+#define YY_NUM_RULES 47
+#define YY_END_OF_BUFFER 48
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -385,8 +385,8 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[113] =
     {   0,
-        0,    0,    0,    0,   47,   45,   44,   44,   15,   45,
-       45,   28,   29,   18,   16,   34,   17,   19,   36,   27,
+        0,    0,    0,    0,   48,   46,   44,   44,   15,   46,
+       46,   28,   29,   18,   16,   34,   17,   19,   36,   27,
        25,   24,   26,   35,   32,   33,   35,   12,   35,   35,
        35,   35,   35,   35,   35,   30,   31,   43,   42,   43,
        44,   21,    0,   38,   37,    0,    0,    0,   40,   36,
@@ -522,11 +522,11 @@ static const flex_int16_t yy_chk[181] =
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[47] =
+static const flex_int32_t yy_rule_can_match_eol[48] =
     {   0,
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 1, 0, 1, 0, 0,     };
+    0, 0, 1, 0, 1, 0, 0, 0,     };
 
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
@@ -1093,22 +1093,27 @@ case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
 #line 103 "lexicon/header.l"
-;
+
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 105 "lexicon/header.l"
+#line 104 "lexicon/header.l"
+
+	YY_BREAK
+case 46:
+YY_RULE_SETUP
+#line 106 "lexicon/header.l"
 {
     fprintf(stderr, "[ERRO LEXICO]: Caractere invalido '%s', na linha %d\n", yytext, yylineno);
     exit(1);
 }
 	YY_BREAK
-case 46:
+case 47:
 YY_RULE_SETUP
-#line 111 "lexicon/header.l"
+#line 112 "lexicon/header.l"
 ECHO;
 	YY_BREAK
-#line 1112 "lexicon/lex.yy.c"
+#line 1117 "lexicon/lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2125,6 +2130,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 111 "lexicon/header.l"
+#line 112 "lexicon/header.l"
 
 

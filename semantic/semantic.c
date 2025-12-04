@@ -11,6 +11,7 @@
 Types current_function_type = TYVOID;
 SymbolTable *root_gl_scope = NULL;
 
+/*Análise semântica global do programa*/
 void analyze_program(Node *ast, SymbolTable *global_scope)
 {
     if (ast == NULL)
@@ -18,7 +19,7 @@ void analyze_program(Node *ast, SymbolTable *global_scope)
 
     if (ast->species != NOPROGRAMA)
     {
-        error_message(ast->row, "A raiz do programa não e um NOPROGRAMA, reescreva o código.");
+        helper_error_message(ast->row, "A raiz do programa não e um NOPROGRAMA, reescreva o código.");
         return;
     }
 
@@ -51,7 +52,7 @@ void analyze_program(Node *ast, SymbolTable *global_scope)
 
                         if (!table_search_name(global_scope, name))
                         {
-                            insert_variable(global_scope, name, convert_type(tdecl), 0);
+                            insert_variable(global_scope, name, helper_convert_type(tdecl), 0);
                         }
                     }
                     decl_id = decl_id->next;
@@ -94,10 +95,10 @@ void analyze_function(Node *func, SymbolTable *global_scope)
 
                 if (table_search_name(function_scope, name))
                 {
-                    error_message(p->row, "Problema de redeclaração de parametro: '%s'.", name);
+                    helper_error_message(p->row, "Problema de redeclaração de parametro: '%s'.", name);
                 }
                 else
-                    insert_parameter(function_scope, name, convert_type(type_params), cont);
+                    insert_parameter(function_scope, name, helper_convert_type(type_params), cont);
 
                 cont++;
             }
@@ -151,7 +152,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
 
                 if (table_search_name(*scope, name))
                 {
-                    error_message(decl->row, "Variavel '%s' foi redeclarada no mesmo escopo, corrija seu codigo.", name);
+                    helper_error_message(decl->row, "Variavel '%s' foi redeclarada no mesmo escopo, corrija seu codigo.", name);
                 }
                 else
                 {
@@ -161,10 +162,10 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
                         found = table_search_above((*scope)->before_scope, name);
 
                     if (found && found->entry == PARAM_ENTRY)
-                        error_message(decl->row, "Varivel tem o mesmo nome do parametro:'%s' .", name);
+                        helper_error_message(decl->row, "Varivel tem o mesmo nome do parametro:'%s' .", name);
 
                     if (found == NULL)
-                        insert_variable(*scope, name, convert_type(tdecl), 0);
+                        insert_variable(*scope, name, helper_convert_type(tdecl), 0);
                 }
             }
             decl = decl->next;
@@ -174,20 +175,20 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
 
     case NOATRIBUICAO:
     {
-        analyze_atribuition(cmd, *scope);
+        helper_analyze_atribuition(cmd, *scope);
         break;
     }
 
     case NOIF:
     {
-        type_is_int(cmd->data.binary.left, *scope, "Condicao do 'se' deve ser int valida.");
+        helper_type_is_int(cmd->data.binary.left, *scope, "Condicao do 'se' deve ser int valida.");
         analyze_command(cmd->data.ifelse.then_node, scope, return_prev);
         break;
     }
 
     case NOIF_ELSE:
     {
-        type_is_int(cmd->data.binary.left, *scope, "Condicao do 'se então' deve ser int valida.");
+        helper_type_is_int(cmd->data.binary.left, *scope, "Condicao do 'se então' deve ser int valida.");
         analyze_command(cmd->data.ifelse.then_node, scope, return_prev);
         analyze_command(cmd->data.ifelse.else_node, scope, return_prev);
         break;
@@ -195,7 +196,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
 
     case NOWHILE:
     {
-        type_is_int(cmd->data.binary.left, *scope, "Condicao do enquanto deve ser int valido.");
+        helper_type_is_int(cmd->data.binary.left, *scope, "Condicao do enquanto deve ser int valido.");
         analyze_command(cmd->data.binary.right, scope, return_prev);
         break;
     }
@@ -204,7 +205,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
         Node *expression = cmd->data.unary.n;
         Types type = analyze_expression(expression, *scope);
         if (type != TYVOID && type != return_prev)
-            error_message(cmd->row, "Tipo da expressao retornada é diferente do tipo da funçao.");
+            helper_error_message(cmd->row, "Tipo da expressao retornada é diferente do tipo da funçao.");
 
         break;
     }
@@ -226,17 +227,17 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
         Node *id = cmd->data.unary.n;
         if (!id || id->species != NOIDENTIFICADOR)
         {
-            error_message(cmd->row, "Comando 'leia' com argumento invalido.");
+            helper_error_message(cmd->row, "Comando 'leia' com argumento invalido.");
             break;
         }
         SymbolEntry *s = table_search_above(*scope, id->data.leaf.lexeme);
         if (!s)
         {
-            error_message(id->row, "Variavel '%s' nao foi declarada.", id->data.leaf.lexeme);
+            helper_error_message(id->row, "Variavel '%s' nao foi declarada.", id->data.leaf.lexeme);
             break;
         }
-        if (convert_type(s->type) != TYINT)
-            error_message(id->row, "Comando 'leia' não aceita aceita variaveis  não inteiras.");
+        if (helper_convert_type(s->type) != TYINT)
+            helper_error_message(id->row, "Comando 'leia' não aceita aceita variaveis  não inteiras.");
 
         break;
     }
@@ -264,33 +265,33 @@ Types analyze_expression(Node *expression, SymbolTable *scope)
         SymbolEntry *symbol = table_search_above(scope, expression->data.leaf.lexeme);
         if (!symbol)
         {
-            error_message(expression->row, "Identificador '%s' nao foi declaro.", expression->data.leaf.lexeme);
+            helper_error_message(expression->row, "Identificador '%s' nao foi declaro.", expression->data.leaf.lexeme);
             exit(1);
             return TYVOID;
         }
-        return convert_type(symbol->type);
+        return helper_convert_type(symbol->type);
     }
 
     case NOATRIBUICAO:
     {
-        return analyze_atribuition(expression, scope);
+        return helper_analyze_atribuition(expression, scope);
     }
 
     case NOSOMA:
     case NOSUBTRACAO:
     case NOMULTIPLICACAO:
     case NODIVISAO:
-        return check_binary_int(expression, scope, "Operacao aritmeticas exigem inteiros.");
+        return helper_check_binary_int(expression, scope, "Operacao aritmeticas exigem inteiros.");
     case NOOR:
     case NOAND:
-        return check_binary_int(expression, scope, "Operacao logicas exigem inteiros.");
+        return helper_check_binary_int(expression, scope, "Operacao logicas exigem inteiros.");
     case NOIGUAL:
     case NODIFERENTE:
     case NOMENOR:
     case NOMENOR_IGUAL:
     case NOMAIOR:
     case NOMAIOR_IGUAL:
-        return check_binary_same(expression, scope, "Comparacao entre tipos diferentes.");
+        return helper_check_binary_same(expression, scope, "Comparacao entre tipos diferentes.");
     case NOCHAMADA_FUNCAO:
         return analyze_func_call(expression, scope);
 
@@ -304,7 +305,7 @@ Types analyze_func_call(Node *func, SymbolTable *scope)
     Node *first_node = func->data.nnary.first;
     if (!first_node || first_node->species != NOIDENTIFICADOR)
     {
-        error_message(func->row, "Chamada de funcao invalida.");
+        helper_error_message(func->row, "Chamada de funcao invalida.");
         return TYVOID;
     }
 
@@ -312,16 +313,16 @@ Types analyze_func_call(Node *func, SymbolTable *scope)
     SymbolEntry *symbol = table_search_above(scope, func_name);
     if (!symbol)
     {
-        error_message(func->row, "Funcao '%s' não declarada.", func_name);
+        helper_error_message(func->row, "Funcao '%s' não declarada.", func_name);
         return TYVOID;
     }
     if (symbol->entry != FUN_ENTRY)
     {
-        error_message(func->row, "'%s' nao e uma funcao valida no programa.", func_name);
+        helper_error_message(func->row, "'%s' nao e uma funcao valida no programa.", func_name);
         return TYVOID;
     }
 
-    Types type = convert_type(symbol->data.fun_data.type);
+    Types type = helper_convert_type(symbol->data.fun_data.type);
     Node *args = first_node->next;
     int expected = symbol->data.fun_data.count_params;
     int real = 0;
@@ -332,7 +333,7 @@ Types analyze_func_call(Node *func, SymbolTable *scope)
         p = p->next;
     }
     if (real != expected)
-        error_message(func->row, "Funcao '%s' usa %d argumentos, porem espera %d.", func_name, real, expected);
+        helper_error_message(func->row, "Funcao '%s' usa %d argumentos, porem espera %d.", func_name, real, expected);
 
     DataType *formal = symbol->data.fun_data.param_types;
     p = args;
@@ -340,9 +341,9 @@ Types analyze_func_call(Node *func, SymbolTable *scope)
     while (p && i < expected)
     {
         Types arg_type = analyze_expression(p, scope);
-        Types real_type = convert_type(formal[i]);
+        Types real_type = helper_convert_type(formal[i]);
         if (arg_type != real_type)
-            error_message(func->row, "Tipo do argumento %d da funcao '%s' e incompativel.", i + 1, func_name);
+            helper_error_message(func->row, "Tipo do argumento %d da funcao '%s' e incompativel.", i + 1, func_name);
         i++;
         p = p->next;
     }

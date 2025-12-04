@@ -100,7 +100,8 @@ exit(1);
     exit(1);
 }
 
-[ \t\n]+       ;
+[ \t\n]+  
+;
 
 . {
     fprintf(stderr, "[ERRO LEXICO]: Caractere invalido '%s', na linha %d\n", yytext, yylineno);

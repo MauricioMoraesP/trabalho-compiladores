@@ -1044,15 +1044,15 @@ case 38:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 77 "lexicon/header.l"
+#line 76 "lexicon/header.l"
 {
-    fprintf(stderr, "[ERRO LEXICO]: String nao foi finalizada de forma certa na linha %d\n", yylineno);
-    exit(1);
+fprintf(stderr, "[ERRO LEXICO]: String nao foi finalizada de forma certa na linha %d\n", yylineno);
+exit(1);
 }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 82 "lexicon/header.l"
+#line 81 "lexicon/header.l"
 {
     yylval.cval = yytext[1];
     return TCHAR_CONST;
@@ -1060,7 +1060,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 88 "lexicon/header.l"
+#line 87 "lexicon/header.l"
 {
     BEGIN(comment);
     row_count = yylineno;
@@ -1068,39 +1068,39 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 93 "lexicon/header.l"
+#line 92 "lexicon/header.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 95 "lexicon/header.l"
+#line 94 "lexicon/header.l"
 { yylineno++; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 97 "lexicon/header.l"
+#line 96 "lexicon/header.l"
 {}
 	YY_BREAK
 case YY_STATE_EOF(comment):
-#line 99 "lexicon/header.l"
+#line 98 "lexicon/header.l"
 {
-    fprintf(stderr, "[ERRO LEXICO]: Comentario nao foi finalizado, na linha %d\n", row_count);
+    fprintf(stderr, "[ERRO LEXICO]: Comentario nao foi finalizado na linha %d\n", row_count);
     exit(1);
 }
 	YY_BREAK
 case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
-#line 104 "lexicon/header.l"
+#line 103 "lexicon/header.l"
 ;
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 106 "lexicon/header.l"
+#line 105 "lexicon/header.l"
 {
     fprintf(stderr, "[ERRO LEXICO]: Caractere invalido '%s', na linha %d\n", yytext, yylineno);
-   exit(1);
+    exit(1);
 }
 	YY_BREAK
 case 46:

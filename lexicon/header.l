@@ -73,10 +73,9 @@ ID       {CAR}({CAR}|{INT}|_)*
     return TSTRING_LITERAL;
 }
 
-
 \"([^"\\\n]|\\.)*$ {
-    fprintf(stderr, "[ERRO LEXICO]: String nao foi finalizada de forma certa na linha %d\n", yylineno);
-    exit(1);
+fprintf(stderr, "[ERRO LEXICO]: String nao foi finalizada de forma certa na linha %d\n", yylineno);
+exit(1);
 }
 
 \'([^\'\\\n]|\\.)\' {
@@ -97,7 +96,7 @@ ID       {CAR}({CAR}|{INT}|_)*
 <comment>.       {}
 
 <comment><<EOF>> {
-    fprintf(stderr, "[ERRO LEXICO]: Comentario nao foi finalizado, na linha %d\n", row_count);
+    fprintf(stderr, "[ERRO LEXICO]: Comentario nao foi finalizado na linha %d\n", row_count);
     exit(1);
 }
 
@@ -105,7 +104,8 @@ ID       {CAR}({CAR}|{INT}|_)*
 
 . {
     fprintf(stderr, "[ERRO LEXICO]: Caractere invalido '%s', na linha %d\n", yytext, yylineno);
-   exit(1);
+    exit(1);
 }
+
 
 %%

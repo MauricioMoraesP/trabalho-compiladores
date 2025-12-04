@@ -1976,7 +1976,7 @@ yyreturnlab:
 
 void yyerror(const char *s) {
     error = 1;
-    fprintf(stderr, "Erro: Erro sintático na linha %d, próximo a '%s'\n", yylineno, yytext);
+    fprintf(stderr, "Erro: Erro lexico  na linha %d na linha '%s'\n", yylineno, yytext);
 }
 
 int main(int argc, char **argv) {
@@ -2004,17 +2004,16 @@ int main(int argc, char **argv) {
             free_ast(root);
             root = NULL;
         }
-        fprintf(stderr, "Falha: foram encontrados erros SINTÁTICO.\n");
         return 1;
     }
 
    
     if (sem_error) {
         fprintf(stderr,
-                "Sucesso: análise foi concluída, mas foram encontrados erros SEMÂNTICO.\n");
+                "Sucesso: analise foi concluida, mas foram encontrados erros SEMANTICOS.\n");
         return 1;
     }
 
-    printf("Sucesso: análise concluída com sucesso, livre de erros semânticos e de erros sintáticos.\n");
+    printf("Sucesso: análise concluída com sucesso, livre de erros semanticos e de erros sintaticos.\n");
     return 0;
 }

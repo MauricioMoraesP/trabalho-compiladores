@@ -40,7 +40,6 @@ void remove_current_scope(SymbolTable **scope)
     SymbolTable *scope_to_remove = *scope;
     SymbolTable *previous_scope = scope_to_remove->before_scope;
     *scope = previous_scope;
-
     SymbolEntry *entry = scope_to_remove->first_entry;
     free_scope_entries(scope_to_remove->first_entry);
     free(scope_to_remove);
@@ -52,26 +51,26 @@ void destroy_symbol_table(SymbolTable *table)
     if (table == NULL)
         return;
 
-    SymbolTable *top = table;
+    SymbolTable *last = table;
 
-    while (top)
+    while (last)
     {
-        SymbolTable *prev = top->before_scope;
-        free_scope_entries(top->first_entry);
-        free(top);
-        top = prev;
+        SymbolTable *prev = last->before_scope;
+        free_scope_entries(last->first_entry);
+        free(last);
+        last = prev;
     }
 }
 
 /* Inserção genérica de símbolo no escopo corrente */
-int insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position)
+void insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position)
 {
     helper_not_null(scope, "inserir um novo simbolo");
 
-    SymbolEntry *entry = table_search_name_in_scope(scope, name);
+    SymbolEntry *entry = table_search_name(scope, name);
     if (entry != NULL)
     {
-        return -1;
+        return NULL;
     }
 
     SymbolEntry *new_entry = helper_malloc(sizeof(SymbolEntry), "insercao de simbolo");
@@ -102,30 +101,29 @@ int insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType
         scope->last_entry->next_symbol = new_entry;
 
     scope->last_entry = new_entry;
-    return 0;
 }
 
 /* Insere função */
-int insert_function(SymbolTable *scope, char *name, DataType type, int num_params, DataType *param_types)
+void insert_function(SymbolTable *scope, char *name, DataType type, int num_params, DataType *param_types)
 {
     return insert_symbol(scope, name, FUN_ENTRY, type, num_params, param_types, 0);
 }
 
 /* Insere variável */
-int insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position)
+void insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position)
 {
 
     return insert_symbol(scope, name, VAR_ENTRY, type, 0, NULL, declaration_position);
 }
 
 /* Insere parâmetro */
-int insert_parameter(SymbolTable *scope, char *name, DataType type, int position)
+void insert_parameter(SymbolTable *scope, char *name, DataType type, int position)
 {
     return insert_symbol(scope, name, PARAM_ENTRY, type, 0, NULL, position);
 }
 
 /* Busca símbolo apenas no escopo atual */
-SymbolEntry *table_search_name_in_scope(SymbolTable *scope, char *name)
+SymbolEntry *table_search_name(SymbolTable *scope, char *name)
 {
     SymbolEntry *entry = scope->first_entry;
     while (entry != NULL)
@@ -141,13 +139,13 @@ SymbolEntry *table_search_name_in_scope(SymbolTable *scope, char *name)
 /* Busca símbolo subindo a pilha de escopos */
 SymbolEntry *table_search_up(SymbolTable *scope, char *name)
 {
-    SymbolTable *currentent = scope;
-    while (currentent != NULL)
+    SymbolTable *current = scope;
+    while (current != NULL)
     {
-        SymbolEntry *found = table_search_name_in_scope(currentent, name);
+        SymbolEntry *found = table_search_name(current, name);
         if (found)
             return found;
-        currentent = currentent->before_scope;
+        current = current->before_scope;
     }
     return NULL;
 }

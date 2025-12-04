@@ -70,10 +70,10 @@ void initialize_symbol_table(SymbolTable **table);
 void create_new_scope(SymbolTable **scope);
 void remove_current_scope(SymbolTable **scope);
 void destroy_symbol_table(SymbolTable *table);
-int insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position);
-int insert_function(SymbolTable *scope, char *name, DataType type, int num_params, DataType *param_types);
-int insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position);
-int insert_parameter(SymbolTable *scope, char *name, DataType type, int position);
-SymbolEntry *table_search_name_in_scope(SymbolTable *scope, char *name);
+void insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position);
+void insert_function(SymbolTable *scope, char *name, DataType type, int num_params, DataType *param_types);
+void insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position);
+void insert_parameter(SymbolTable *scope, char *name, DataType type, int position);
+SymbolEntry *table_search_name(SymbolTable *scope, char *name);
 SymbolEntry *table_search_up(SymbolTable *scope, char *name);
 #endif

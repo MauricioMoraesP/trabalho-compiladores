@@ -80,7 +80,6 @@ DeclFuncVar:
         nnary_add_child(decl, id);
         insert_variable(current, $2, $1, declaration_position);
         nnary_merge_children(decl, $3);
-
         Node *list = ($5 ? $5 : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID));
         nnary_add_child(list, decl);
         $$ = list;

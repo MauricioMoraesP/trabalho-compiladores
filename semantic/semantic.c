@@ -49,7 +49,7 @@ void analyze_program(Node *ast, SymbolTable *global_scope)
                         char *name = decl_id->data.leaf.lexeme;
                         Types tdecl = child->type;
 
-                        if (!table_search_name_in_scope(global_scope, name))
+                        if (!table_search_name(global_scope, name))
                         {
                             insert_variable(global_scope, name, convert_type(tdecl), 0);
                         }
@@ -92,7 +92,7 @@ void analyze_function(Node *func, SymbolTable *global_scope)
                 char *name = p->data.leaf.lexeme;
                 Types type_params = p->type;
 
-                if (table_search_name_in_scope(function_scope, name))
+                if (table_search_name(function_scope, name))
                 {
                     error_message(p->row, "Parametro '%s' redeclarado.", name);
                 }
@@ -149,7 +149,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
                 char *name = decl->data.leaf.lexeme;
                 Types tdecl = cmd->type;
 
-                if (table_search_name_in_scope(*scope, name))
+                if (table_search_name(*scope, name))
                 {
                     error_message(decl->row, "Variavel '%s' redeclarada no mesmo escopo.", name);
                 }

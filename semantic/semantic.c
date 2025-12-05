@@ -8,7 +8,7 @@
 #include "semantic.h"
 #include "../syntax/utils/dictionary/dictionary.h"
 
-Types current_function_type = TYVOID;
+Types global_fun_type = TYVOID;
 SymbolTable *root_gl_scope = NULL;
 
 /*Análise semântica global do programa*/
@@ -70,9 +70,9 @@ void analyze_function(Node *func, SymbolTable *global_scope)
     if (func == NULL)
         return;
 
-    Types type = current_function_type;
+    Types type = global_fun_type;
 
-    current_function_type = func->type;
+    global_fun_type = func->type;
 
     create_new_scope(&global_scope);
     SymbolTable *function_scope = global_scope;
@@ -107,11 +107,11 @@ void analyze_function(Node *func, SymbolTable *global_scope)
     }
 
     if (body && body->species == NOBLOCO)
-        analyze_command(body, &function_scope, current_function_type);
+        analyze_command(body, &function_scope, global_fun_type);
     else
-        analyze_command(body, &function_scope, current_function_type);
+        analyze_command(body, &function_scope, global_fun_type);
 
-    current_function_type = type;
+    global_fun_type = type;
     remove_current_scope(&global_scope);
 }
 

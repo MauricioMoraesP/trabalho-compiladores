@@ -22,7 +22,7 @@ Node* root = NULL;
 int lex_error = 0;
 SymbolTable *global=NULL;
 SymbolTable *current=NULL;
-int declaration_position = 0;
+int local_escope_index = 0;
 int sem_error = 0;
 %}
 
@@ -65,7 +65,7 @@ int sem_error = 0;
 Programa:
     DeclFuncVar DeclProg {
         Node *program = create_nnary_node(NOPROGRAMA, yylineno, TYVOID);
-        nnary_merge_children(program, $1);
+        helper_change_parent(program, $1);
         if ($2)
             nnary_add_child(program, $2);
         $$ = program;
@@ -78,8 +78,8 @@ DeclFuncVar:
         Node *decl = create_nnary_node(NODECL_VAR, yylineno, $1);
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnary_add_child(decl, id);
-        insert_variable(current, $2, $1, declaration_position);
-        nnary_merge_children(decl, $3);
+        insert_variable(current, $2, $1, local_escope_index);
+        helper_change_parent(decl, $3);
         Node *list = ($5 ? $5 : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID));
         nnary_add_child(list, decl);
         $$ = list;
@@ -105,8 +105,8 @@ DeclFuncVar:
         }
         if (global) insert_function(global, $2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),num_params, param_types);
         else  insert_function(current ? current : global, $2, ($1 == TYINT ? INT_TYPE : CAR_TYPE), num_params, param_types);
-    
-        nnary_merge_children(func, $3);
+
+        helper_change_parent(func, $3);
         Node *list = $4 ? $4 : create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
         nnary_add_child(list, func);
         $$ = list;
@@ -115,40 +115,34 @@ DeclFuncVar:
 
 ;
 
-
 DeclProg:
     TPROGRAM Bloco { $$ = $2; }
 ;
-
 
 DeclVar:
     TCOMMA TID_TOKEN DeclVar {
         Node *id_node = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, $2, 0, 0);
         Node *list = create_nnary_node(NOLISTA_DECL, yylineno, TYVOID);
         nnary_add_child(list, id_node);
-        nnary_merge_children(list, $3);
+        helper_change_parent(list, $3);
         $$ = list;
     }
     | /* epsilon */ { $$ = NULL; }
 ;
 
-
 DeclFunc:
-    TLPAREN { create_new_scope(&current); declaration_position = 0; }
+    TLPAREN { create_new_scope(&current); local_escope_index = 0; }
     ListaParametros TRPAREN Bloco 
     { 
-        Node *wrap = create_nnary_node(NOFUNC_COMPONENTS, yylineno, TYVOID);
+        Node *comp = create_nnary_node(NOFUNC_COMPONENTS, yylineno, TYVOID);
         Node *params = $3; 
         if (!params) params = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
-        nnary_add_child(wrap, params);
-        nnary_add_child(wrap, $5);  
+        nnary_add_child(comp, params);
+        nnary_add_child(comp, $5);  
         remove_current_scope(&current);
-        $$ = wrap;
+        $$ = comp;
     }
 ;
-
-
-
 
 ListaParametros:
      /* epsilon */ {
@@ -165,15 +159,14 @@ ListaParametrosCont:
          Node *list = create_nnary_node(NOLISTA_PARAMS, yylineno, TYVOID);
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnary_add_child(list, param);
-         if (current)  insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE), declaration_position++);
+         if (current)  insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE), local_escope_index++);
          $$ = list;
      }
     | Tipo TID_TOKEN TCOMMA ListaParametrosCont {
-
          Node *list = $4;
          Node *param = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
          nnary_add_child(list, param);
-         if (current) insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
+         if (current) insert_parameter(current, $2,($1 == TYINT ? INT_TYPE : CAR_TYPE),local_escope_index++);
          $$ = list;
      }
 ;
@@ -182,7 +175,7 @@ Bloco:
     TLBRACE 
     {
         create_new_scope(&current);
-        declaration_position = 0;
+        local_escope_index = 0;
     }
     ListaDeclVar
     ListaComando
@@ -190,8 +183,8 @@ Bloco:
     {
         remove_current_scope(&current);
         Node *bloco = create_nnary_node(NOBLOCO, yylineno, TYVOID);
-        nnary_merge_children(bloco, $3);
-        nnary_merge_children(bloco, $4);
+        helper_change_parent(bloco, $3);
+        helper_change_parent(bloco, $4);
         $$ = bloco;
     }
 ;
@@ -206,7 +199,7 @@ ListaDeclVar:
         Node *decl = create_nnary_node(NODECL_VAR, yylineno, $1);
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnary_add_child(decl, id);
-        if (current) insert_variable(current,$2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),declaration_position++);
+        if (current) insert_variable(current,$2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),local_escope_index++);
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
             while (child) {
@@ -217,7 +210,7 @@ ListaDeclVar:
                         current,
                         child->data.leaf.lexeme,
                         ($1 == TYINT ? INT_TYPE : CAR_TYPE),
-                        declaration_position++
+                        local_escope_index++
                     );
                 }
                 nnary_add_child(decl, child);
@@ -229,8 +222,6 @@ ListaDeclVar:
         $$ = acc;
     }
 ;
-
-
 
 Tipo:
     TINT { $$ = TYINT; }
@@ -253,12 +244,9 @@ ListaComando:
             nnary_add_child(l, $1); 
             $$ = l; 
         }
-        else $$ = NULL;
-
-        
+        else $$ = NULL;       
     }
 ;
-
 
 Comando:
     TSEMICOLON
@@ -372,7 +360,7 @@ PrimExpr:
     Node *call = create_nnary_node(NOCHAMADA_FUNCAO, yylineno, TYVOID);
     Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, TYVOID, $1, 0, 0);
     nnary_add_child(call, id);    
-    nnary_merge_children(call, $3);
+    helper_change_parent(call, $3);
     $$ = call;
 }
 
@@ -415,19 +403,19 @@ void yyerror(const char *s) {
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        fprintf(stderr, "Erro: argumento ausente.\n");
+        fprintf(stderr, "Erro de entrada: ausencia de argumentos.\n");
         return 1;
     }
 
     yyin = fopen(argv[1], "r");
     if (!yyin) {
-        fprintf(stderr, "Erro: não foi possível abrir o arquivo '%s'.\n", argv[1]);
+        fprintf(stderr, "Erro de arquivo: nao foi possivel abrir o codigo '%s'.\n", argv[1]);
         return 1;
     }
 
     initialize_symbol_table(&global);
     current = global;
-    declaration_position = 0;
+    local_escope_index = 0;
 
     yyparse(); 
     fclose(yyin);

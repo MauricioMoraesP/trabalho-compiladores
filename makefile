@@ -1,15 +1,6 @@
 COMPILER = parser
 YACC = syntax/header.y
 LEX = lexicon/header.l
-SEMAN_RIGHT_TEST = \
-    tests/semantic/right/fatorialCorreto.g
-
-SEMAN_ERROR_TEST = \
-    tests/semantic/errors/fatorialErroLin5TipoRetornado.g
-
-LEX_TEST = \
-    tests/lexic/fatorialErroLin15String2linhas.txt
-
 ITENS = \
     syntax/ast.c \
     semantic/utils/helpers.c \
@@ -60,25 +51,31 @@ $(COMPILER): $(OBJS)
 clean:
 	rm -f $(COMPILER) $(YACC_HEADER_C) $(YACC_HEADER_H) $(LEX_COMPILER) $(OBJS)
 
+
+
+SEMAN_RIGHT_REST := $(wildcard tests/semantic/right/*.g)
+SEMAN_ERROR_TEST := $(wildcard tests/semantic/errors/*.g)
+LEX_TEST := $(wildcard tests/lexic/*.txt)
+
 test: parser semantic-right semantic-error lex-test
 
 semantic-right:
 	@echo "\nTestes códigos sem erro semânticos"
-	@for f in $(SEMAN_RIGHT_TEST); do \
-		echo "\n[SEM OK] $$f"; \
+	@for f in $(SEMAN_RIGHT_REST); do \
+		echo "\n[SEMANTIC RIGHT] $$f"; \
 		./parser $$f || true; \
 	done
 
 semantic-error:
 	@echo "\nTestes códigos com erro semânticos"
 	@for f in $(SEMAN_ERROR_TEST); do \
-		echo "\n[SEM ERR] $$f"; \
+		echo "\n[SEMANTIC ERROR] $$f"; \
 		./parser $$f || true; \
 	done
 
 lex-test:
 	@echo "\nTestes Lexico"
 	@for f in $(LEX_TEST); do \
-		echo "\n[LEX ERR] $$f"; \
+		echo "\n[LEXIC ERROR] $$f"; \
 		./parser $$f || true; \
 	done

@@ -19,7 +19,7 @@ int yylex();
 // Error handling function declaration
 void yyerror(const char *s);
 Node* root = NULL;
-int lex_error = 0;
+int semantic_error = 0;
 SymbolTable *global=NULL;
 SymbolTable *current=NULL;
 int local_escope_index = 0;
@@ -92,6 +92,8 @@ DeclFuncVar:
         Node *params_node = ($3 && $3->data.nnary.first) ? $3->data.nnary.first : NULL;
         int num_params = 0;
         DataType *param_types = NULL;
+
+        // Count params and to save types.
         if (params_node && params_node->data.nnary.first) {
             Node *p = params_node->data.nnary.first;
             while (p) { num_params++; p = p->next; }
@@ -103,6 +105,7 @@ DeclFuncVar:
                 p = p->next;
             }
         }
+
         if (global) insert_function(global, $2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),num_params, param_types);
         else  insert_function(current ? current : global, $2, ($1 == TYINT ? INT_TYPE : CAR_TYPE), num_params, param_types);
 
@@ -200,6 +203,8 @@ ListaDeclVar:
         Node *id = create_leaf_node(NOIDENTIFICADOR, yylineno, $1, $2, 0, 0);
         nnary_add_child(decl, id);
         if (current) insert_variable(current,$2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),local_escope_index++);
+        
+        // If DeclVar has more ids of some type.
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
             while (child) {
@@ -398,7 +403,7 @@ ListExpr:
 %%
 
 void yyerror(const char *s) {
-    lex_error = 1;
+    semantic_error = 1;
 }
 
 int main(int argc, char **argv) {
@@ -421,7 +426,7 @@ int main(int argc, char **argv) {
     fclose(yyin);
     analyze_semantic_program(root, global);
 
-    if (lex_error) {
+    if (semantic_error) {
         if (root) {
             free_ast(root);
             root = NULL;

@@ -14,56 +14,22 @@ Este projeto implementa um compilador didático para a linguagem Goianinha. O tr
 
 /syntax -  Contém os arquivos para o analisador sintático.
 
-### Teste das funções da tabela de síombolos.
+/syntax/utils/dicitionary -  Contém os arquivos do dicionário de dados que foi criado para a AST.
 
-No prompt:
+/semantic - Contém os arquivos do semântico.
 
-```
-cd symbol_table/
+/semantic/utils - Contém as funções de apoio do semântico.
 
-gcc -o test_symbol_table main.c implementation.c utils/*.c
-
-./test_symbol_table 
-
-```
+/tests - Possui os testes do analisador semântico e do léxico dado pelo professor.
 
 
-
-### Compilando o código
+### Compilando o código e todos exemplos de teste
 
 No prompt:
 ```
 make
 
-./parser <nome_do_arquivo>.goianinha
+make test
 ```
 
-### Exemplo de Uso
-
-Para demonstrar o funcionamento do compilador, utilize o seguinte código de exemplo:
-
-
-**`meu_programa.goianinha`**
-```goianinha
-programa {
-    int a, b, c;
-
-    car d;
-
-    a = 1;
-    b = 2;
-    c = a + b;
-
-    se (a == b) entao {
-        escreva a;
-    } senao {
-        escreva b;
-    }
-
-    enquanto (c > 0) execute {
-        c = c - 1;
-    }
-}
-
-```
 

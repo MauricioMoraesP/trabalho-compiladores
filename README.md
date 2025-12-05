@@ -1,6 +1,6 @@
 # Instruções.
 
-Este projeto implementa um compilador didático para a linguagem Goianinha. O trabalho abrange a criação da Tabela de Símbolos, do Analisador Léxico e do Analisador Sintático.
+Este projeto implementa um compilador didático para a linguagem Goianinha. O trabalho abrange a criação da Tabela de Símbolos, do Analisador Léxico, o Analisador Sintático e o Analisador Semântico.
 
 
 

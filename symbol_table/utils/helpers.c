@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+// Auxiliador para alocar memoria.
 void *helper_malloc(size_t size, const char *context_msg)
 {
     void *ptr = malloc(size);
@@ -15,7 +16,7 @@ void *helper_malloc(size_t size, const char *context_msg)
     }
     return ptr;
 }
-
+// Validador de entrada.
 void helper_not_null(const void *ptr, char *context)
 {
     if (!ptr)
@@ -25,6 +26,7 @@ void helper_not_null(const void *ptr, char *context)
     }
 }
 
+// Eliminação de redundâncias dentro do código.
 void free_scope_entries(SymbolEntry *entry)
 {
     while (entry)

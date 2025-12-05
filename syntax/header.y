@@ -419,7 +419,7 @@ int main(int argc, char **argv) {
 
     yyparse(); 
     fclose(yyin);
-    analyze_program(root, global);
+    analyze_semantic_program(root, global);
 
     if (lex_error) {
         if (root) {

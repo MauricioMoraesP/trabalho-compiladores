@@ -1,6 +1,7 @@
 COMPILER = parser
 YACC = syntax/header.y
 LEX = lexicon/header.l
+
 ITENS = \
     syntax/ast.c \
     semantic/utils/helpers.c \
@@ -8,13 +9,16 @@ ITENS = \
     syntax/utils/dictionary/dictionary.c \
     semantic/semantic.c \
     symbol_table/implementation.c
+
 YACC_HEADER_C = syntax/header.tab.c
 YACC_HEADER_H = syntax/header.tab.h
 LEX_COMPILER = lexicon/lex.yy.c
+
 CC = gcc
 CFLAGS = -Wall -Wextra -Wno-unused-result -g -fno-omit-frame-pointer -fstack-protector-strong
 LDFLAGS = -lfl
 INCLUDES = -I.
+
 OBJS = \
     syntax/ast.o \
     semantic/utils/helpers.o \
@@ -25,7 +29,6 @@ OBJS = \
     syntax/header.tab.o \
     lexicon/lex.yy.o
 
-.PHONY: all clean
 
 all: $(COMPILER)
 
@@ -48,7 +51,7 @@ lexicon/lex.yy.o: $(LEX_COMPILER) $(YACC_HEADER_H)
 $(COMPILER): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(COMPILER) $(OBJS) $(LDFLAGS)
 
-clean:
+clear:
 	rm -f $(COMPILER) $(YACC_HEADER_C) $(YACC_HEADER_H) $(LEX_COMPILER) $(OBJS)
 
 

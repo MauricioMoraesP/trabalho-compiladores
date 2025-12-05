@@ -44,8 +44,8 @@ void helper_validation_null_table(SymbolTable *table)
 /*Verifica se ambos os operandos de uma expressão binária são inteiros*/
 Types helper_check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
 {
-    Types left = analyze_expression(expr->data.binary.left, scope);
-    Types right = analyze_expression(expr->data.binary.right, scope);
+    Types left = semantic_expression(expr->data.binary.left, scope);
+    Types right = semantic_expression(expr->data.binary.right, scope);
 
     if (left != TYINT || right != TYINT)
     {
@@ -62,8 +62,8 @@ Types helper_check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
 /*Verifica se ambos os operandos de uma expressão binária têm o mesmo tipo*/
 Types helper_check_binary_same(Node *expr, SymbolTable *scope, const char *msg)
 {
-    Types l = analyze_expression(expr->data.binary.left, scope);
-    Types r = analyze_expression(expr->data.binary.right, scope);
+    Types l = semantic_expression(expr->data.binary.left, scope);
+    Types r = semantic_expression(expr->data.binary.right, scope);
 
     if (l != r)
     {
@@ -75,7 +75,7 @@ Types helper_check_binary_same(Node *expr, SymbolTable *scope, const char *msg)
 /*Verifica se a expressão é do tipo inteiro*/
 Types helper_type_is_int(Node *expr, SymbolTable *scope, const char *msg)
 {
-    Types type = analyze_expression(expr, scope);
+    Types type = semantic_expression(expr, scope);
     if (type != TYINT)
     {
         helper_error_message(expr->row, "%s", msg);
@@ -105,7 +105,7 @@ Types helper_analyze_atribuition(Node *atr, SymbolTable *scope)
         return TYVOID;
     }
 
-    Types right_type = analyze_expression(right, scope);
+    Types right_type = semantic_expression(right, scope);
     Types left_type = helper_convert_type(sym->type);
 
     if (right_type != left_type)

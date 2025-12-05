@@ -8,9 +8,9 @@
 extern int sem_error;
 
 // Função para verificar se o lexema foi declarado na tabela de símbolos
-void analyze_program(Node *ast, SymbolTable *global_scope);
-void analyze_function(Node *fun, SymbolTable *global_scope);
-void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev);
-Types analyze_expression(Node *expr, SymbolTable *scope);
-Types analyze_func_call(Node *call, SymbolTable *scope);
+void analyze_semantic_program(Node *ast, SymbolTable *global_scope);
+void semantic_function(Node *fun, SymbolTable *global_scope);
+void semantic_command(Node *cmd, SymbolTable **scope, Types return_prev);
+Types semantic_expression(Node *expr, SymbolTable *scope);
+Types semantic_func_call(Node *call, SymbolTable *scope);
 #endif

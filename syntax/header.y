@@ -19,7 +19,7 @@ int yylex();
 // Error handling function declaration
 void yyerror(const char *s);
 Node* root = NULL;
-int error = 0;
+int lex_error = 0;
 SymbolTable *global=NULL;
 SymbolTable *current=NULL;
 int declaration_position = 0;
@@ -410,8 +410,7 @@ ListExpr:
 %%
 
 void yyerror(const char *s) {
-    error = 1;
-    fprintf(stderr, "Erro: Erro lexico  na linha %d na linha '%s'\n", yylineno, yytext);
+    lex_error = 1;
 }
 
 int main(int argc, char **argv) {
@@ -434,7 +433,7 @@ int main(int argc, char **argv) {
     fclose(yyin);
     analyze_program(root, global);
 
-    if (error) {
+    if (lex_error) {
         if (root) {
             free_ast(root);
             root = NULL;
@@ -444,8 +443,7 @@ int main(int argc, char **argv) {
 
    
     if (sem_error) {
-        fprintf(stderr,
-                "Sucesso: analise foi concluida, mas foram encontrados erros SEMANTICOS.\n");
+        fprintf(stderr, "Sucesso: analise foi concluida, mas foram encontrados erros SEMANTICOS.\n");
         return 1;
     }
 

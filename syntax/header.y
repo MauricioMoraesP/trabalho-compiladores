@@ -429,7 +429,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-   
     if (sem_error) {
         fprintf(stderr, "Sucesso: analise foi concluida, mas foram encontrados erros SEMANTICOS.\n");
         return 1;

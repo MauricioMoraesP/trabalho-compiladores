@@ -14,6 +14,8 @@ SymbolTable *root_gl_scope = NULL;
 /*Análise semântica global do programa*/
 void analyze_program(Node *ast, SymbolTable *global_scope)
 {
+    helper_validation_null_table(global_scope);
+
     if (ast == NULL)
         return;
 
@@ -65,6 +67,7 @@ void analyze_program(Node *ast, SymbolTable *global_scope)
     }
 }
 
+/* Análise semântica de declaração de função */
 void analyze_function(Node *func, SymbolTable *global_scope)
 {
     if (func == NULL)
@@ -115,6 +118,7 @@ void analyze_function(Node *func, SymbolTable *global_scope)
     remove_current_scope(&global_scope);
 }
 
+/* Análise semântica de comandos */
 void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
 {
     if (cmd == NULL || scope == NULL)
@@ -247,6 +251,7 @@ void analyze_command(Node *cmd, SymbolTable **scope, Types return_prev)
     }
 }
 
+/* Análise de expressões */
 Types analyze_expression(Node *expression, SymbolTable *scope)
 {
     if (!expression)
@@ -300,6 +305,7 @@ Types analyze_expression(Node *expression, SymbolTable *scope)
     }
 }
 
+/* Análise de chamada de função */
 Types analyze_func_call(Node *func, SymbolTable *scope)
 {
     Node *first_node = func->data.nnary.first;
@@ -318,7 +324,7 @@ Types analyze_func_call(Node *func, SymbolTable *scope)
     }
     if (symbol->entry != FUN_ENTRY)
     {
-        helper_error_message(func->row, "'%s' nao e uma funcao valida no programa.", func_name);
+        helper_error_message(func->row, "'%s' nao e uma funcao valida.", func_name);
         return TYVOID;
     }
 

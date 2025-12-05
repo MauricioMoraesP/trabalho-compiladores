@@ -14,7 +14,6 @@ void initialize_symbol_table(SymbolTable **table)
 /* Cria um novo escopo e o empilha sobre o atual */
 void create_new_scope(SymbolTable **scope)
 {
-
     SymbolTable *parent = *scope;
     SymbolTable *new_scope = helper_malloc(sizeof(SymbolTable), "criacao de escopo");
     new_scope->first_entry = NULL;
@@ -33,10 +32,7 @@ void create_new_scope(SymbolTable **scope)
 /* Remove o escopo atual e libera seus símbolos */
 void remove_current_scope(SymbolTable **scope)
 {
-
-    if (scope == NULL || *scope == NULL)
-        return;
-
+    helper_validation_null_table(*scope);
     SymbolTable *scope_to_remove = *scope;
     SymbolTable *previous_scope = scope_to_remove->before_scope;
     *scope = previous_scope;
@@ -48,9 +44,7 @@ void remove_current_scope(SymbolTable **scope)
 /* Destroi toda a tabela, liberando todos os escopos e símbolos */
 void destroy_symbol_table(SymbolTable *table)
 {
-    if (table == NULL)
-        return;
-
+    helper_validation_null_table(*table);
     SymbolTable *last = table;
 
     while (last)
@@ -66,6 +60,7 @@ void destroy_symbol_table(SymbolTable *table)
 void insert_symbol(SymbolTable *scope, char *name, EntryType entry_type, DataType data_type, int num_params, DataType *param_types, int declaration_position)
 {
     helper_not_null(scope, "inserir um novo simbolo");
+    helper_validation_null_table(*scope);
 
     SymbolEntry *entry = table_search_name(scope, name);
     if (entry != NULL)
@@ -125,6 +120,7 @@ void insert_parameter(SymbolTable *scope, char *name, DataType type, int positio
 /* Busca símbolo apenas no escopo atual */
 SymbolEntry *table_search_name(SymbolTable *scope, char *name)
 {
+    helper_validation_null_table(*scope);
     SymbolEntry *entry = scope->first_entry;
     while (entry != NULL)
     {
@@ -139,6 +135,7 @@ SymbolEntry *table_search_name(SymbolTable *scope, char *name)
 /* Busca símbolo subindo a pilha de escopos */
 SymbolEntry *table_search_above(SymbolTable *scope, char *name)
 {
+    helper_validation_null_table(*scope);
     SymbolTable *current = scope;
     while (current != NULL)
     {

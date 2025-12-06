@@ -48,25 +48,24 @@ void analyze_semantic_program(Node *root, SymbolTable *globals)
     }
 }
 
-void semantic_function(Node *fn, SymbolTable *globals)
+void semantic_function(Node *fun, SymbolTable *globals)
 {
-    if (!fn)
+    if (!fun)
         return;
 
     Types prev_type = current_return_type;
-    current_return_type = fn->type;
+    current_return_type = fun->type;
 
     create_new_scope(&globals);
     SymbolTable *local = globals;
 
-    Node *header = fn->data.nnary.first;
-    Node *params = header ? header->next : NULL;
+    Node *first = fun->data.nnary.first;
+    Node *params = first ? first->next : NULL;
     Node *components = params ? params->next : NULL;
 
-    if (params &&
-        (params->species == NOLISTA_DECL || params->species == NOLISTA_PARAMS))
+    if (params && (params->species == NOLISTA_DECL || params->species == NOLISTA_PARAMS))
     {
-        int pos = 0;
+        int position = 0;
         for (Node *p = params->data.nnary.first; p; p = p->next)
         {
             if (p->species != NOIDENTIFICADOR)
@@ -78,7 +77,7 @@ void semantic_function(Node *fn, SymbolTable *globals)
             if (table_search_name(local, name))
                 helper_error_message(p->row, "Parametro '%s' definido duas vezes.", name);
             else
-                insert_parameter(local, name, helper_convert_type(t), pos++);
+                insert_parameter(local, name, helper_convert_type(t), position++);
         }
     }
 
@@ -219,7 +218,7 @@ Types semantic_expression(Node *ex, SymbolTable *scope)
     case NOMENOR_IGUAL:
     case NOMAIOR:
     case NOMAIOR_IGUAL:
-        return helper_check_binary_same(ex, scope, "Comparacao entre tipos diferentes.");
+        return helper_check_binary_same(ex, scope, "Comparacao entre tiposition diferentes.");
 
     case NOCHAMADA_FUNCAO:
         return semantic_func_call(ex, scope);

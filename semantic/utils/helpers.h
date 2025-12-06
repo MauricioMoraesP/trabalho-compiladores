@@ -3,6 +3,7 @@
 
 #include "../../symbol_table/structure.h"
 #include "../semantic.h"
+#include "../semantic.h"
 
 typedef enum
 {
@@ -19,4 +20,6 @@ Types helper_check_binary_int(Node *expr, SymbolTable *scope, const char *msg);
 Types helper_analyze_atribuition(Node *assign, SymbolTable *scope);
 void helper_insert_global_variables(Node *node, SymbolTable **scope);
 void helper_insert_local_variables(Node *node, SymbolTable **scope);
+SymbolEntry *table_search_above(SymbolTable *scope, char *name);
+
 #endif

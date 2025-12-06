@@ -75,5 +75,4 @@ void insert_function(SymbolTable *scope, char *name, DataType type, int num_para
 void insert_variable(SymbolTable *scope, char *name, DataType type, int declaration_position);
 void insert_parameter(SymbolTable *scope, char *name, DataType type, int position);
 SymbolEntry *table_search_name(SymbolTable *scope, char *name);
-SymbolEntry *table_search_above(SymbolTable *scope, char *name);
 #endif

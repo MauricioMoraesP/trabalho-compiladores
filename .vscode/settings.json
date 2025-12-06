@@ -13,6 +13,7 @@
         "ast.h": "c",
         "dictionary.h": "c",
         "stdarg.h": "c",
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "functional": "c"
     }
 }

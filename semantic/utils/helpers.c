@@ -5,6 +5,36 @@
 #include <string.h>
 #include "helpers.h"
 
+Types semantic_expression(Node *n, SymbolTable *scope)
+{
+    return analyze_semantic_program(n, &scope, TYVOID);
+}
+
+/*Verifica se a tabela de símbolos foi inicializada*/
+void helper_validation_null_table(SymbolTable *table)
+{
+    if (table == NULL)
+    {
+        printf("\n A tabela de simbolos nao foi inicializada corretamente.\n");
+        exit(1);
+    }
+}
+
+/* Busca símbolo subindo a pilha de escopos */
+SymbolEntry *table_search_above(SymbolTable *scope, char *name)
+{
+    helper_validation_null_table(scope);
+    SymbolTable *current = scope;
+    while (current != NULL)
+    {
+        SymbolEntry *found = table_search_name(current, name);
+        if (found)
+            return found;
+        current = current->before_scope;
+    }
+    return NULL;
+}
+
 /*Converte o tipo interno Types para o tipo inteiro da tabela de símbolos*/
 int helper_convert_type(Types t)
 {
@@ -30,15 +60,6 @@ void helper_error_message(int line, const char *fmt, ...)
     va_end(args);
     fprintf(stderr, "\n");
     sem_error = 1;
-}
-/*Verifica se a tabela de símbolos foi inicializada*/
-void helper_validation_null_table(SymbolTable *table)
-{
-    if (table == NULL)
-    {
-        printf("\n A tabela de simbolos nao foi inicializada corretamente.\n");
-        exit(1);
-    }
 }
 
 /*Verifica se ambos os operandos de uma expressão binária são inteiros*/

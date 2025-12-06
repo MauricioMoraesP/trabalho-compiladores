@@ -117,7 +117,7 @@ void insert_parameter(SymbolTable *scope, char *name, DataType type, int positio
     return insert_symbol(scope, name, PARAM_ENTRY, type, 0, NULL, position);
 }
 
-/* Busca símbolo apenas no escopo atual */
+/* Busca símbolo apenas no escopo */
 SymbolEntry *table_search_name(SymbolTable *scope, char *name)
 {
     helper_validation_null_table(*scope);
@@ -128,21 +128,6 @@ SymbolEntry *table_search_name(SymbolTable *scope, char *name)
             return entry;
 
         entry = entry->next_symbol;
-    }
-    return NULL;
-}
-
-/* Busca símbolo subindo a pilha de escopos */
-SymbolEntry *table_search_above(SymbolTable *scope, char *name)
-{
-    helper_validation_null_table(*scope);
-    SymbolTable *current = scope;
-    while (current != NULL)
-    {
-        SymbolEntry *found = table_search_name(current, name);
-        if (found)
-            return found;
-        current = current->before_scope;
     }
     return NULL;
 }

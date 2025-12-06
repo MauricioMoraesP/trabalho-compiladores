@@ -424,7 +424,7 @@ int main(int argc, char **argv) {
 
     yyparse(); 
     fclose(yyin);
-    analyze_semantic_program(root, global);
+    analyze_semantic_program(root, &global, TYVOID);
 
     if (semantic_error) {
         if (root) {

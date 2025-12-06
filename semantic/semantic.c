@@ -58,7 +58,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
     case NOINT_CONST: // constante inteira retorna tipo int
         return TYINT;
 
-    case NOREAD: // comando read exige que o destino seja variável int válida
+    case NOREAD: // comando leia exige que o destino seja variável int válida
     {
         Node *id = node->data.unary.n;
 
@@ -82,7 +82,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         return TYINT;
     }
 
-    case NOWHILE: // condição do WHILE precisa ser inteira e depois analisa corpo
+    case NOWHILE: // condição do enquanto precisa ser inteira e depois analisa corpo
         helper_type_is_int(node->data.binary.left, *scope, "Condicao do WHILE deve ser inteira.");
         analyze_semantic_program(node->data.binary.right, scope, expected_return);
         return TYVOID;
@@ -122,13 +122,13 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         remove_current_scope(scope);
         return TYVOID;
 
-    case NOIF_ELSE: // if-else exige cond int e analisa dois blocos
+    case NOIF_ELSE: // if com else exige condição int e analisa dois blocos
         helper_type_is_int(node->data.binary.left, *scope, "Condicao do IF-ELSE deve ser inteira.");
         analyze_semantic_program(node->data.ifelse.then_node, scope, expected_return);
         analyze_semantic_program(node->data.ifelse.else_node, scope, expected_return);
         return TYVOID;
 
-    case NOCHAMADA_FUNCAO: // chamada de função valida existência, tipos e contagem de args
+    case NOCHAMADA_FUNCAO: // chamada de função valida existência, tipos e contagem de argumentos
     {
         Node *name = node->data.nnary.first;
 
@@ -161,8 +161,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
             count_real++;
 
         if (count_real != s->data.fun_data.count_params)
-            helper_error_message(node->row, "Funcao '%s' recebeu %d argumentos, esperava %d.",
-                                 lex, count_real, s->data.fun_data.count_params);
+            helper_error_message(node->row, "Funcao '%s' recebeu %d argumentos, esperava %d.", lex, count_real, s->data.fun_data.count_params);
 
         DataType *formal = s->data.fun_data.param_types;
 
@@ -173,8 +172,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
             Types want = helper_convert_type(formal[i]);
 
             if (got != want)
-                helper_error_message(node->row,
-                                     "Tipo do argumento %d invalido em '%s'.", i + 1, lex);
+                helper_error_message(node->row, "Tipo do argumento %d invalido em '%s'.", i + 1, lex);
         }
 
         return ret;
@@ -189,7 +187,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         SymbolTable *local = *scope;
 
         Node *params = node->data.nnary.first->next;
-        Node *body = params ? params->next : NULL;
+        Node *others = params ? params->next : NULL;
 
         int pos = 0;
         if (params && (params->species == NOLISTA_DECL || params->species == NOLISTA_PARAMS))
@@ -209,8 +207,8 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
             }
         }
 
-        if (body)
-            analyze_semantic_program(body, &local, current_return_type);
+        if (others)
+            analyze_semantic_program(others, &local, current_return_type);
 
         current_return_type = old;
         remove_current_scope(scope);

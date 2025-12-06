@@ -238,16 +238,16 @@ ListaComando:
         if ($2 == NULL) { $$ = $1; } 
         else if ($1 != NULL) { nnary_add_child($1, $2); $$ = $1; } 
         else { 
-            Node *l = create_nnary_node(NOLISTA_COMANDOS, yylineno, TYVOID); 
-            nnary_add_child(l, $2); 
-            $$ = l; 
+            Node *list = create_nnary_node(NOLISTA_COMANDOS, yylineno, TYVOID); 
+            nnary_add_child(list, $2); 
+            $$ = list; 
         }
     }
     | Comando {
         if ($1 != NULL) { 
-            Node *l = create_nnary_node(NOLISTA_COMANDOS, yylineno, TYVOID); 
-            nnary_add_child(l, $1); 
-            $$ = l; 
+            Node *list = create_nnary_node(NOLISTA_COMANDOS, yylineno, TYVOID); 
+            nnary_add_child(list, $1); 
+            $$ = list; 
         }
         else $$ = NULL;       
     }
@@ -389,9 +389,9 @@ PrimExpr:
 
 ListExpr:
     Expr {
-        Node *l = create_nnary_node(NOLISTA_EXPR, yylineno, TYVOID);
-        nnary_add_child(l, $1);
-        $$ = l;
+        Node *list = create_nnary_node(NOLISTA_EXPR, yylineno, TYVOID);
+        nnary_add_child(list, $1);
+        $$ = list;
       }
     | ListExpr TCOMMA Expr {
         nnary_add_child($1, $3);

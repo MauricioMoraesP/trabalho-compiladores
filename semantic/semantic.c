@@ -2,273 +2,172 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "utils/helpers.h"
+#include "semantic.h"
 #include "../syntax/ast.h"
 #include "../symbol_table/structure.h"
-#include "semantic.h"
+#include "utils/helpers.h"
 #include "../syntax/utils/dictionary/dictionary.h"
 
-Types global_fun_type = TYVOID;
-SymbolTable *root_gl_scope = NULL;
+static Types current_return_type = TYVOID;
+static SymbolTable *global_scope_ref = NULL;
 
-/* Faz a análise semântica geral do programa. Começa do NOPROGRAMA e vai varrendo tudo. */
-void analyze_semantic_program(Node *ast, SymbolTable *global)
+void analyze_semantic_program(Node *root, SymbolTable *globals)
 {
-    helper_validation_null_table(global);
-
-    if (ast == NULL)
+    if (!root || !globals)
         return;
 
-    /* O nó raiz obrigatoriamente tem que ser um NOPROGRAMA */
-    if (ast->species != NOPROGRAMA)
+    if (root->species != NOPROGRAMA)
     {
-        helper_error_message(ast->row, "A raiz do programa não e um NOPROGRAMA, reescreva o código.");
+        helper_error_message(root->row, "O nó raiz precisa ser NOPROGRAMA.");
         return;
     }
 
-    /* Guardamos onde está o escopo global real */
-    root_gl_scope = global;
-
-    Node *child = ast->data.unary.n;
-    while (child)
+    global_scope_ref = globals;
+    for (Node *n = root->data.unary.n; n; n = n->next)
     {
-        /* Análise das funções declaradas antes do programa */
-        if (child->species == NODECL_FUNCAO)
+        switch (n->species)
         {
-            semantic_function(child, global);
-        }
-        /* Analisa o bloco principal do programa (dentro de 'programa { }') */
-        else if (child->species == NOBLOCO)
-        {
-            create_new_scope(&global);
-            semantic_command(child, &global, TYVOID);
-            remove_current_scope(&global);
-        }
-        else
-        {
-            /* Tratamento das declarações globais antes do bloco principal */
-            if (child->species == NODECL_VAR)
-            {
-                Node *declaration_id = child->data.nnary.first;
-                while (declaration_id)
-                {
-                    if (declaration_id->species == NOIDENTIFICADOR)
-                    {
-                        char *name = declaration_id->data.leaf.lexeme;
-                        Types tdeclaration = child->type;
+        case NODECL_FUNCAO:
+            semantic_function(n, globals);
+            break;
 
-                        /* Variável global só entra se ainda não existir. Se já existe no global, é redeclaração. */
-                        if (!table_search_name(global, name))
-                        {
-                            insert_variable(global, name, helper_convert_type(tdeclaration), 0);
-                        }
-                    }
-                    declaration_id = declaration_id->next;
-                }
-            }
+        case NOBLOCO:
+            create_new_scope(&globals);
+            semantic_command(n, &globals, TYVOID);
+            remove_current_scope(&globals);
+            break;
 
-            /* Para qualquer outro comando global, aplica as regras semânticas */
-            semantic_command(child, &global, TYVOID);
+        case NODECL_VAR:
+            helper_insert_global_variables(n, &globals);
+            break;
+
+        default:
+            semantic_command(n, &globals, TYVOID);
+            break;
         }
-        child = child->next;
     }
 }
 
-/* Análise semântica da função: parâmetros, corpo e tipo de retorno */
-void semantic_function(Node *func, SymbolTable *global)
+void semantic_function(Node *fn, SymbolTable *globals)
 {
-    if (func == NULL)
+    if (!fn)
         return;
 
-    /* Guarda o tipo de retorno anterior (caso esteja processando outra função antes) */
-    Types type = global_fun_type;
+    Types prev_type = current_return_type;
+    current_return_type = fn->type;
 
-    /* Define o tipo de retorno que a função atual promete retornar */
-    global_fun_type = func->type;
+    create_new_scope(&globals);
+    SymbolTable *local = globals;
 
-    /* Toda função abre seu próprio escopo local */
-    create_new_scope(&global);
-    SymbolTable *function_scope = global;
-
-    /* Pega a lista de parâmetros e o bloco da função */
-    Node *first_node = func->data.nnary.first;
-    Node *params = first_node ? first_node->next : NULL;
+    Node *header = fn->data.nnary.first;
+    Node *params = header ? header->next : NULL;
     Node *components = params ? params->next : NULL;
 
-    /* Insere os parâmetros formais na tabela da função */
-    if (params && (params->species == NOLISTA_DECL || params->species == NOLISTA_PARAMS))
+    if (params &&
+        (params->species == NOLISTA_DECL || params->species == NOLISTA_PARAMS))
     {
-        Node *p = params->data.nnary.first;
-        int cont = 0;
-
-        while (p)
+        int pos = 0;
+        for (Node *p = params->data.nnary.first; p; p = p->next)
         {
-            if (p->species == NOIDENTIFICADOR)
-            {
-                char *name = p->data.leaf.lexeme;
-                Types type_params = p->type;
+            if (p->species != NOIDENTIFICADOR)
+                continue;
 
-                /* Parâmetro não pode repetir nome dentro do escopo da função */
-                if (table_search_name(function_scope, name))
-                {
-                    helper_error_message(p->row, "Problema de redeclarationaração de parametro: '%s'.", name);
-                }
-                else
-                    insert_parameter(function_scope, name, helper_convert_type(type_params), cont);
+            char *name = p->data.leaf.lexeme;
+            Types t = p->type;
 
-                cont++;
-            }
-            p = p->next;
+            if (table_search_name(local, name))
+                helper_error_message(p->row, "Parametro '%s' definido duas vezes.", name);
+            else
+                insert_parameter(local, name, helper_convert_type(t), pos++);
         }
     }
 
-    /* Analisa o bloco da função, validando retornos e comandos */
-    if (components && components->species == NOBLOCO)
-        semantic_command(components, &function_scope, global_fun_type);
-    else
-        semantic_command(components, &function_scope, global_fun_type);
+    if (components)
+        semantic_command(components, &local, current_return_type);
 
-    /* Volta o tipo antigo porque terminou a função atual */
-    global_fun_type = type;
-    remove_current_scope(&global);
+    current_return_type = prev_type;
+    remove_current_scope(&globals);
 }
 
-/* Análise semântica de qualquer comando da linguagem */
-void semantic_command(Node *cmmd, SymbolTable **scope, Types return_prev)
+void semantic_command(Node *cmd, SymbolTable **scope, Types expected)
 {
-    if (cmmd == NULL || scope == NULL)
+    if (!cmd || !scope || !*scope)
         return;
 
-    switch (cmmd->species)
+    switch (cmd->species)
     {
     case NOBLOCO:
     {
-        /* Cada bloco novo abre um novo escopo */
         create_new_scope(scope);
 
-        Node *c = cmmd->data.nnary.first;
-        while (c)
-        {
-            semantic_command(c, scope, return_prev);
-            c = c->next;
-        }
+        for (Node *c = cmd->data.nnary.first; c; c = c->next)
+            semantic_command(c, scope, expected);
 
-        /* Remove o escopo ao sair do bloco */
         remove_current_scope(scope);
         break;
     }
 
     case NODECL_VAR:
-    {
-        /* Variáveis globais já foram tratadas antes, então ignoramos aqui */
-        if (*scope == root_gl_scope)
-            break;
-
-        Node *declaration = cmmd->data.nnary.first;
-        while (declaration)
-        {
-            if (declaration->species == NOIDENTIFICADOR)
-            {
-                char *name = declaration->data.leaf.lexeme;
-                Types tdeclaration = cmmd->type;
-
-                /* Redeclaração de variável no mesmo escopo não pode */
-                if (table_search_name(*scope, name))
-                {
-                    helper_error_message(declaration->row, "Variavel '%s' foi redeclaracao de variavel no mesmo escopo, corrija seu codigo.", name);
-                }
-                else
-                {
-                    SymbolEntry *found = NULL;
-
-                    /* Checa se conflita com nome de parâmetro da função */
-                    if ((*scope)->before_scope)
-                        found = table_search_above((*scope)->before_scope, name);
-
-                    if (found && found->entry == PARAM_ENTRY)
-                        helper_error_message(declaration->row, "Varivel tem o mesmo nome do parametro:'%s' .", name);
-
-                    /* Nome válido → insere a variável no escopo atual */
-                    if (found == NULL)
-                        insert_variable(*scope, name, helper_convert_type(tdeclaration), 0);
-                }
-            }
-            declaration = declaration->next;
-        }
+        if (*scope != global_scope_ref)
+            helper_insert_local_variables(cmd, scope);
         break;
-    }
 
     case NOATRIBUICAO:
-        /* Checa se o tipo da expressão bate com o tipo da variável */
-        helper_analyze_atribuition(cmmd, *scope);
+        helper_analyze_atribuition(cmd, *scope);
         break;
 
     case NOIF:
-        /* A condição do 'se' precisa obrigatoriamente ser int */
-        helper_type_is_int(cmmd->data.binary.left, *scope, "Condicao do 'se' deve ser int valida.");
-        semantic_command(cmmd->data.ifelse.then_node, scope, return_prev);
+        helper_type_is_int(cmd->data.binary.left, *scope, "A condicao do 'se' precisa ser inteira.");
+        semantic_command(cmd->data.ifelse.then_node, scope, expected);
         break;
 
     case NOIF_ELSE:
-        /* A condição do 'se então' precisa ser int */
-        helper_type_is_int(cmmd->data.binary.left, *scope, "Condicao do 'se então' deve ser int valida.");
-        semantic_command(cmmd->data.ifelse.then_node, scope, return_prev);
-        semantic_command(cmmd->data.ifelse.else_node, scope, return_prev);
+        helper_type_is_int(cmd->data.binary.left, *scope, "A condicao do 'se-entao' deve ser int.");
+        semantic_command(cmd->data.ifelse.then_node, scope, expected);
+        semantic_command(cmd->data.ifelse.else_node, scope, expected);
         break;
 
     case NOWHILE:
-        /* Condição do enquanto também precisa ser int */
-        helper_type_is_int(cmmd->data.binary.left, *scope, "Condicao do enquanto deve ser int valido.");
-        semantic_command(cmmd->data.binary.right, scope, return_prev);
+        helper_type_is_int(cmd->data.binary.left, *scope, "Condicao do 'enquanto' deve ser inteira.");
+        semantic_command(cmd->data.binary.right, scope, expected);
         break;
 
     case NORETURN:
     {
-        /* Verifica se o tipo retornado bate com o tipo da função */
-        Node *expression = cmmd->data.unary.n;
-        Types type = semantic_expression(expression, *scope);
-        if (type != TYVOID && type != return_prev)
-            helper_error_message(cmmd->row, "Tipo da expressao retornada é diferente do tipo da funçao.");
+        Node *exp = cmd->data.unary.n;
+        Types t = semantic_expression(exp, *scope);
+
+        if (t != TYVOID && t != expected)
+            helper_error_message(cmd->row, "Tipo retornado nao corresponde ao tipo da funcao.");
         break;
     }
 
-    /* Chamada de função é avaliada como expressão para validar tipos */
     case NOCHAMADA_FUNCAO:
-        semantic_expression(cmmd, *scope);
+        semantic_expression(cmd, *scope);
         break;
 
     case NOWRITE:
-        /* write expr → precisa só analisar a expressão que está sendo escrita */
-        semantic_expression(cmmd->data.unary.n, *scope);
-        break;
-
-    case NOWRITE_LITERAL:
-    case NONEWLINE:
+        semantic_expression(cmd->data.unary.n, *scope);
         break;
 
     case NOREAD:
     {
-        /* 'leia' só pode receber identificadores válidos (e precisam ser int) */
-        Node *id = cmmd->data.unary.n;
-
+        Node *id = cmd->data.unary.n;
         if (!id || id->species != NOIDENTIFICADOR)
         {
-            helper_error_message(cmmd->row, "Comando 'leia' com argumento invalido.");
+            helper_error_message(cmd->row, "Comando 'leia' exige um identificador.");
             break;
         }
 
-        /* Variável precisa existir */
         SymbolEntry *s = table_search_above(*scope, id->data.leaf.lexeme);
         if (!s)
         {
-            helper_error_message(id->row, "Variavel '%s' nao foi declarationarada.", id->data.leaf.lexeme);
+            helper_error_message(id->row, "Variavel '%s' nao declarada.", id->data.leaf.lexeme);
             break;
         }
 
-        /* 'leia' aceita somente variáveis inteiras */
         if (helper_convert_type(s->type) != TYINT)
-            helper_error_message(id->row, "Comando 'leia' só aceita variaveis inteiras.");
-
+            helper_error_message(id->row, "'leia' aceita apenas inteiros.");
         break;
     }
 
@@ -277,13 +176,12 @@ void semantic_command(Node *cmmd, SymbolTable **scope, Types return_prev)
     }
 }
 
-/* Analisa expressões e retorna o tipo que ela produz */
-Types semantic_expression(Node *expression, SymbolTable *scope)
+Types semantic_expression(Node *ex, SymbolTable *scope)
 {
-    if (!expression)
+    if (!ex)
         return TYVOID;
 
-    switch (expression->species)
+    switch (ex->species)
     {
     case NOINT_CONST:
         return TYINT;
@@ -293,110 +191,93 @@ Types semantic_expression(Node *expression, SymbolTable *scope)
 
     case NOIDENTIFICADOR:
     {
-        /* Identificador precisa existir em algum escopo acima */
-        SymbolEntry *symbol = table_search_above(scope, expression->data.leaf.lexeme);
-        if (!symbol)
+        SymbolEntry *s = table_search_above(scope, ex->data.leaf.lexeme);
+        if (!s)
         {
-            helper_error_message(expression->row, "Identificador '%s' nao foi declarationaro.", expression->data.leaf.lexeme);
+            helper_error_message(ex->row, "Identificador '%s' nao declarado.", ex->data.leaf.lexeme);
             exit(1);
-            return TYVOID;
         }
-        return helper_convert_type(symbol->type);
+        return helper_convert_type(s->type);
     }
 
     case NOATRIBUICAO:
-        return helper_analyze_atribuition(expression, scope);
+        return helper_analyze_atribuition(ex, scope);
 
-    /* Operações aritméticas só funcionam com inteiros */
     case NOSOMA:
     case NOSUBTRACAO:
     case NOMULTIPLICACAO:
     case NODIVISAO:
-        return helper_check_binary_int(expression, scope, "Operacao aritmeticas exigem inteiros.");
+        return helper_check_binary_int(ex, scope, "Operacoes aritmeticas exigem inteiros.");
 
-    /* Operações lógicas também exigem inteiros */
     case NOOR:
     case NOAND:
-        return helper_check_binary_int(expression, scope, "Operacao logicas exigem inteiros.");
+        return helper_check_binary_int(ex, scope, "Operacoes logicas exigem inteiros.");
 
-    /* Operações relacionais exigem que os dois lados tenham o mesmo tipo */
     case NOIGUAL:
     case NODIFERENTE:
     case NOMENOR:
     case NOMENOR_IGUAL:
     case NOMAIOR:
     case NOMAIOR_IGUAL:
-        return helper_check_binary_same(expression, scope, "Comparacao entre tipos diferentes.");
+        return helper_check_binary_same(ex, scope, "Comparacao entre tipos diferentes.");
 
     case NOCHAMADA_FUNCAO:
-        return semantic_func_call(expression, scope);
+        return semantic_func_call(ex, scope);
 
     default:
         return TYVOID;
     }
 }
 
-/* Valida uma chamada de função: nome, número de argumentos e tipos */
-Types semantic_func_call(Node *func, SymbolTable *scope)
+Types semantic_func_call(Node *call, SymbolTable *scope)
 {
-    Node *first_node = func->data.nnary.first;
-    if (!first_node || first_node->species != NOIDENTIFICADOR)
+    Node *name_node = call->data.nnary.first;
+
+    if (!name_node || name_node->species != NOIDENTIFICADOR)
     {
-        helper_error_message(func->row, "Chamada de funcao invalida.");
+        helper_error_message(call->row, "Chamada de funcao mal formada.");
         return TYVOID;
     }
 
-    char *func_name = first_node->data.leaf.lexeme;
-    SymbolEntry *symbol = table_search_above(scope, func_name);
+    char *name = name_node->data.leaf.lexeme;
+    SymbolEntry *s = table_search_above(scope, name);
 
-    /* A função precisa existir no escopo */
-    if (!symbol)
+    if (!s)
     {
-        helper_error_message(func->row, "Funcao '%s' não declarationarada.", func_name);
+        helper_error_message(call->row, "Funcao '%s' nao declarada.", name);
         return TYVOID;
     }
 
-    /* E o identificador realmente deve ser uma função */
-    if (symbol->entry != FUN_ENTRY)
+    if (s->entry != FUN_ENTRY)
     {
-        helper_error_message(func->row, "'%s' nao e uma funcao valida.", func_name);
+        helper_error_message(call->row, "'%s' nao e funcao.", name);
         return TYVOID;
     }
 
-    Types type = helper_convert_type(symbol->data.fun_data.type);
+    Types ret = helper_convert_type(s->data.fun_data.type);
 
-    /* Conta quantos argumentos reais foram passados */
-    Node *args = first_node->next;
-    int expected = symbol->data.fun_data.count_params;
+    Node *arg = name_node->next;
     int real = 0;
-    Node *p = args;
-
-    while (p)
-    {
+    for (Node *x = arg; x; x = x->next)
         real++;
-        p = p->next;
-    }
 
-    /* Número de parâmetros da função tem que bater com o número passado na chamada */
+    int expected = s->data.fun_data.count_params;
     if (real != expected)
-        helper_error_message(func->row, "Funcao '%s' usa %d argumentos, porem espera %d.", func_name, real, expected);
-
-    /* Cada argumento precisa ter exatamente o mesmo tipo do parâmetro formal */
-    DataType *formal = symbol->data.fun_data.param_types;
-    p = args;
-    int i = 0;
-
-    while (p && i < expected)
     {
-        Types arg_type = semantic_expression(p, scope);
-        Types real_type = helper_convert_type(formal[i]);
-
-        if (arg_type != real_type)
-            helper_error_message(func->row, "Tipo do argumento %d da funcao '%s' e incompativel.", i + 1, func_name);
-
-        i++;
-        p = p->next;
+        helper_error_message(call->row, "Funcao '%s' recebeu %d argumentos, esperava %d.", name, real, expected);
     }
 
-    return type;
+    DataType *formal = s->data.fun_data.param_types;
+
+    int i = 0;
+    for (Node *p = arg; p && i < expected; p = p->next, i++)
+    {
+        Types got = semantic_expression(p, scope);
+        Types want = helper_convert_type(formal[i]);
+
+        if (got != want)
+            helper_error_message(call->row, "Tipo do argumento %d de '%s' nao confere.", i + 1, name);
+    }
+
+    return ret;
 }

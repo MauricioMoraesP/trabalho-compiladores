@@ -116,3 +116,72 @@ Types helper_analyze_atribuition(Node *atr, SymbolTable *scope)
 
     return left_type;
 }
+
+/*Inserção de variaveis globais.*/
+void helper_insert_global_variables(Node *node, SymbolTable **scope)
+{
+    if (!node || !scope)
+        return;
+
+    Node *decl = node->data.nnary.first;
+
+    while (decl)
+    {
+        if (decl->species == NOIDENTIFICADOR)
+        {
+            char *name = decl->data.leaf.lexeme;
+            Types tdecl = node->type;
+
+            if (!table_search_name(*scope, name))
+            {
+                insert_variable(*scope, name, helper_convert_type(tdecl), 0);
+            }
+        }
+
+        decl = decl->next;
+    }
+}
+/*Inserção de variaveis locais.*/
+void helper_insert_local_variables(Node *node, SymbolTable **scope)
+{
+    if (!node || !scope)
+        return;
+
+    Node *decl = node->data.nnary.first;
+
+    while (decl)
+    {
+        if (decl->species == NOIDENTIFICADOR)
+        {
+            char *name = decl->data.leaf.lexeme;
+            Types tdecl = node->type;
+
+            if (table_search_name(*scope, name))
+            {
+                helper_error_message(decl->row,
+                                     "Variavel '%s' foi redeclaracao de variavel no mesmo escopo, corrija seu codigo.",
+                                     name);
+            }
+            else
+            {
+                SymbolEntry *found = NULL;
+
+                if ((*scope)->before_scope)
+                    found = table_search_above((*scope)->before_scope, name);
+
+                if (found && found->entry == PARAM_ENTRY)
+                {
+                    helper_error_message(decl->row,
+                                         "Varivel tem o mesmo nome do parametro:'%s' .",
+                                         name);
+                }
+                else
+                {
+                    insert_variable(*scope, name, helper_convert_type(tdecl), 0);
+                }
+            }
+        }
+
+        decl = decl->next;
+    }
+}

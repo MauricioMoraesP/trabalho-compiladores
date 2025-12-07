@@ -8,6 +8,9 @@
 #include "utils/helpers.h"
 #include "../syntax/utils/dictionary/dictionary.h"
 
+// Variaveis auxiliadoras
+// Depois de codar a metade do semântico percebi que não ia dar certo se eu de alguma forma não salvasse essas referências.
+// O semântico foi feito de forma simples, em uma única função recursiva.
 static Types current_return_type = TYVOID;   // guarda o tipo de retorno que a função atual deve produzir
 static SymbolTable *global_scope_ref = NULL; // referência do escopo global para distinguir vars globais e locais
 

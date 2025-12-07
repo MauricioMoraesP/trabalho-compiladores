@@ -39,7 +39,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
             helper_insert_local_variables(node, scope);
         return TYVOID;
 
-    case NOIF: // condição do IF precisa ser inteira e depois analisa o bloco then
+    case NOIF: // condição do 'se' precisa ser inteira e depois analisa o bloco 'então'
         helper_type_is_int(node->data.binary.left, *scope, "Condicao do IF deve ser inteira.");
         analyze_semantic_program(node->data.ifelse.then_node, scope, expected_return);
         return TYVOID;
@@ -61,7 +61,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
     case NOINT_CONST: // constante inteira retorna tipo int
         return TYINT;
 
-    case NOREAD: // comando leia exige que o destino seja variável int válida
+    case NOREAD: // comando 'leia' exige que o destino seja variável int válida
     {
         Node *id = node->data.unary.n;
 
@@ -85,7 +85,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         return TYINT;
     }
 
-    case NOWHILE: // condição do enquanto precisa ser inteira e depois analisa corpo
+    case NOWHILE: // condição do 'enquanto' precisa ser inteira e depois analisa corpo
         helper_type_is_int(node->data.binary.left, *scope, "Condicao do WHILE deve ser inteira.");
         analyze_semantic_program(node->data.binary.right, scope, expected_return);
         return TYVOID;
@@ -104,7 +104,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         return helper_convert_type(s->type);
     }
 
-    case NORETURN: // return verifica compatibilidade com o tipo da função
+    case NORETURN: // 'return' verifica compatibilidade com o tipo da função
     {
         Node *exp = node->data.unary.n;
         Types t = analyze_semantic_program(exp, scope, expected_return);
@@ -125,7 +125,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         remove_current_scope(scope);
         return TYVOID;
 
-    case NOIF_ELSE: // if com else exige condição int e analisa dois blocos
+    case NOIF_ELSE: // 'se' com 'então' exige condição int e analisa dois blocos
         helper_type_is_int(node->data.binary.left, *scope, "Condicao do IF-ELSE deve ser inteira.");
         analyze_semantic_program(node->data.ifelse.then_node, scope, expected_return);
         analyze_semantic_program(node->data.ifelse.else_node, scope, expected_return);
@@ -142,34 +142,34 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         }
 
         char *lex = name->data.leaf.lexeme;
-        SymbolEntry *s = table_search_above(*scope, lex);
+        SymbolEntry *search_above = table_search_above(*scope, lex);
 
-        if (!s)
+        if (!search_above)
         {
             helper_error_message(node->row, "Funcao '%s' nao existe.", lex);
             return TYVOID;
         }
 
-        if (s->entry != FUN_ENTRY)
+        if (search_above->entry != FUN_ENTRY)
         {
             helper_error_message(node->row, "'%s' nao e funcao.", lex);
             return TYVOID;
         }
 
-        Types ret = helper_convert_type(s->data.fun_data.type);
+        Types ret = helper_convert_type(search_above->data.fun_data.type);
 
         Node *arg = name->next;
         int count_real = 0;
         for (Node *x = arg; x; x = x->next)
             count_real++;
 
-        if (count_real != s->data.fun_data.count_params)
-            helper_error_message(node->row, "Funcao '%s' recebeu %d argumentos, esperava %d.", lex, count_real, s->data.fun_data.count_params);
+        if (count_real != search_above->data.fun_data.count_params)
+            helper_error_message(node->row, "Funcao '%s' recebeu %d argumentos, esperava %d.", lex, count_real, search_above->data.fun_data.count_params);
 
-        DataType *formal = s->data.fun_data.param_types;
+        DataType *formal = search_above->data.fun_data.param_types;
 
         int i = 0;
-        for (Node *p = arg; p && i < s->data.fun_data.count_params; p = p->next, i++)
+        for (Node *p = arg; p && i < search_above->data.fun_data.count_params; p = p->next, i++)
         {
             Types got = analyze_semantic_program(p, scope, expected_return);
             Types want = helper_convert_type(formal[i]);
@@ -183,7 +183,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
 
     case NODECL_FUNCAO: // declaração de função cria escopo, insere params e analisa corpo
     {
-        Types old = current_return_type;
+        Types before_type = current_return_type;
         current_return_type = node->type;
 
         create_new_scope(scope);
@@ -213,7 +213,7 @@ Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_r
         if (others)
             analyze_semantic_program(others, &local, current_return_type);
 
-        current_return_type = old;
+        current_return_type = before_type;
         remove_current_scope(scope);
         return TYVOID;
     }

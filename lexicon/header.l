@@ -75,6 +75,7 @@ ID       {CAR}({CAR}|{INT}|_)*
 
 \"([^"\\\n]|\\.)*$ {
 fprintf(stderr, "[ERRO LEXICO]: String nao foi finalizada de forma certa na linha %d\n", yylineno);
+fprintf(stderr, "Sucesso: analise foi concluida, mas foram encontrados erros LEXICOS.\n");
 exit(1);
 }
 
@@ -97,6 +98,7 @@ exit(1);
 
 <comment><<EOF>> {
     fprintf(stderr, "[ERRO LEXICO]: Comentario nao foi finalizado na linha %d\n", row_count);
+    fprintf(stderr, "Sucesso: analise foi concluida, mas foram encontrados erros LEXICOS.\n");
     exit(1);
 }
 
@@ -105,6 +107,7 @@ exit(1);
 
 . {
     fprintf(stderr, "[ERRO LEXICO]: Caractere invalido '%s', na linha %d\n", yytext, yylineno);
+    fprintf(stderr, "Sucesso: analise foi concluida, mas foram encontrados erros LEXICOS.\n");
     exit(1);
 }
 

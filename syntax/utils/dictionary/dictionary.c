@@ -6,44 +6,44 @@
 
 // Grupo de tipos de Nós.
 const NodeDictionaryEntry NODE_DICTIONARY[] = {
-    {NODECL_VAR, "DeclVar", NODE_GENERIC, -1, 0},
-    {NODECL_FUNCAO, "DeclFunc", NODE_GENERIC, -1, 0},
-    {NOCHAMADA_FUNCAO, "ChamadaFunc", NODE_GENERIC, -1, 0},
-    {NOATRIBUICAO, "Atribuicao", NODE_BINARY, 2, 0},
-    {NOBLOCO, "Bloco", NODE_GENERIC, -1, 0},
-    {NOIF, "If", NODE_BINARY, 2, 0},
-    {NOIF_ELSE, "IfElse", NODE_IFELSE, 3, 0},
-    {NOWHILE, "While", NODE_BINARY, 2, 0},
-    {NORETURN, "Return", NODE_UNARY, 1, 0},
-    {NOWRITE, "Write", NODE_UNARY, 1, 0},
-    {NOREAD, "Read", NODE_UNARY, 1, 0},
-    {NONEWLINE, "NewLine", NODE_GENERIC, -1, 0},
-    {NOWRITE_LITERAL, "WriteLiteral", NODE_UNARY, 1, 0},
-    {NOSOMA, "Add", NODE_BINARY, 2, 0},
-    {NOSUBTRACAO, "Sub", NODE_BINARY, 2, 0},
-    {NOMULTIPLICACAO, "Mul", NODE_BINARY, 2, 0},
-    {NODIVISAO, "Div", NODE_BINARY, 2, 0},
-    {NOAND, "And", NODE_BINARY, 2, 0},
-    {NOOR, "Or", NODE_BINARY, 2, 0},
-    {NOIGUAL, "Eq", NODE_BINARY, 2, 0},
-    {NODIFERENTE, "Neq", NODE_BINARY, 2, 0},
-    {NOMENOR, "Lt", NODE_BINARY, 2, 0},
-    {NOMENOR_IGUAL, "Leq", NODE_BINARY, 2, 0},
-    {NOMAIOR, "Gt", NODE_BINARY, 2, 0},
-    {NOMAIOR_IGUAL, "Geq", NODE_BINARY, 2, 0},
-    {NONEGACAO, "Not", NODE_UNARY, 1, 0},
-    {NOMENOS_UNARIO, "UnaryMinus", NODE_UNARY, 1, 0},
-    {NOIDENTIFICADOR, "Ident", NODE_LEAF, 0, 1},
-    {NOINT_CONST, "IntConst", NODE_LEAF, 0, 0},
-    {NOCAR_CONST, "CharConst", NODE_LEAF, 0, 0},
-    {NOSTRING_LITERAL, "StringLiteral", NODE_LEAF, 0, 1},
-    {NOLISTA_COMANDOS, "ListaComando", NODE_GENERIC, -1, 0},
-    {NOPROGRAMA, "Programa", NODE_GENERIC, -1, 0},
-    {NOLISTA_EXPR, "ListaExpr", NODE_GENERIC, -1, 0},
-    {NOLISTA_DECL, "ListaDeclVar", NODE_GENERIC, -1, 0},
-    {NOLISTA_PARAMS, "ListaParametros", NODE_GENERIC, -1, 0},
-    {NOFUNC_COMPONENTS, "ComponentesFunc", NODE_GENERIC, -1, 0},
-    {(NSpecies)-1, NULL, 0, 0, 0},
+    {NODECL_VAR, "DeclVar", NODE_GENERIC, 0},
+    {NODECL_FUNCAO, "DeclFunc", NODE_GENERIC, 0},
+    {NOCHAMADA_FUNCAO, "ChamadaFunc", NODE_GENERIC, 0},
+    {NOATRIBUICAO, "Atribuicao", NODE_BINARY, 0},
+    {NOBLOCO, "Bloco", NODE_GENERIC, 0},
+    {NOIF, "If", NODE_BINARY, 0},
+    {NOIF_ELSE, "IfElse", NODE_IFELSE, 0},
+    {NOWHILE, "While", NODE_BINARY, 0},
+    {NORETURN, "Return", NODE_UNARY, 0},
+    {NOWRITE, "Write", NODE_UNARY, 0},
+    {NOREAD, "Read", NODE_UNARY, 0},
+    {NONEWLINE, "NewLine", NODE_GENERIC, 0},
+    {NOWRITE_LITERAL, "WriteLiteral", NODE_UNARY, 0},
+    {NOSOMA, "Add", NODE_BINARY, 0},
+    {NOSUBTRACAO, "Sub", NODE_BINARY, 0},
+    {NOMULTIPLICACAO, "Mul", NODE_BINARY, 0},
+    {NODIVISAO, "Div", NODE_BINARY, 0},
+    {NOAND, "And", NODE_BINARY, 0},
+    {NOOR, "Or", NODE_BINARY, 0},
+    {NOIGUAL, "Eq", NODE_BINARY, 0},
+    {NODIFERENTE, "Neq", NODE_BINARY, 0},
+    {NOMENOR, "Lt", NODE_BINARY, 0},
+    {NOMENOR_IGUAL, "Leq", NODE_BINARY, 0},
+    {NOMAIOR, "Gt", NODE_BINARY, 0},
+    {NOMAIOR_IGUAL, "Geq", NODE_BINARY, 0},
+    {NONEGACAO, "Not", NODE_UNARY, 0},
+    {NOMENOS_UNARIO, "UnaryMinus", NODE_UNARY, 0},
+    {NOIDENTIFICADOR, "Ident", NODE_LEAF, 1},
+    {NOINT_CONST, "IntConst", NODE_LEAF, 0},
+    {NOCAR_CONST, "CharConst", NODE_LEAF, 0},
+    {NOSTRING_LITERAL, "StringLiteral", NODE_LEAF, 1},
+    {NOLISTA_COMANDOS, "ListaComando", NODE_GENERIC, 0},
+    {NOPROGRAMA, "Programa", NODE_GENERIC, 0},
+    {NOLISTA_EXPR, "ListaExpr", NODE_GENERIC, 0},
+    {NOLISTA_DECL, "ListaDeclVar", NODE_GENERIC, 0},
+    {NOLISTA_PARAMS, "ListaParametros", NODE_GENERIC, 0},
+    {NOFUNC_COMPONENTS, "ComponentesFunc", NODE_GENERIC, 0},
+    {(NSpecies)-1, NULL, 0, 0},
 };
 
 /*Função responsável em encontrar o tipo do Nó associado ao dicionário.*/
@@ -57,17 +57,17 @@ const NodeDictionaryEntry *findInfosNode(const NSpecies s)
     return NULL;
 }
 
-/* Função de apoio para a tabela de simbolos.*/
-void helper_change_parent(Node *dest, Node *src)
+/* Função de apoio para a ast, mudamos os filhos antigos para o novo pai.*/
+void helper_change_parent(Node *new_father, Node *children)
 {
-    if (!src || !src->data.nnary.first)
+    if (!children || !children->data.nnary.first)
         return;
 
-    Node *child = src->data.nnary.first;
+    Node *child = children->data.nnary.first;
     while (child)
     {
         Node *next = child->next;
-        nnary_add_child(dest, child);
+        nnary_add_child(new_father, child);
         child = next;
     }
 }

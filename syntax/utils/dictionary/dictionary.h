@@ -12,12 +12,12 @@ typedef enum
     NODE_GENERIC
 } NodeType;
 
+// Dicionário de entradas.
 typedef struct
 {
     NSpecies species;
     const char *name;
     NodeType type;
-    int numb_children;
     int has_lexeme;
 } NodeDictionaryEntry;
 

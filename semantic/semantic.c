@@ -10,7 +10,6 @@
 
 // Variaveis auxiliadoras
 // Depois de codar a metade do semântico percebi que não ia dar certo se eu não salvasse essas referências em variáveis auxiliadoras.
-// O semântico foi feito de forma simples, em uma única função recursiva.
 static Types aux_current_type = TYVOID;      // guarda o tipo de retorno que a função atual deve produzir
 static SymbolTable *aux_global_scope = NULL; // referência do escopo global para distinguir vars globais e locais
 

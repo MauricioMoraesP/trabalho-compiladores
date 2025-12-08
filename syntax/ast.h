@@ -1,7 +1,7 @@
 #ifndef AST_H
 #define AST_H
-
 #include "types.h"
+
 Node *create_leaf_node(NSpecies s, int row, Types type, const char *lex, int val, char car_val);
 Node *create_unary_node(NSpecies s, int row, Types type, Node *child);
 Node *create_binary_node(NSpecies s, int row, Types type, Node *left, Node *right);

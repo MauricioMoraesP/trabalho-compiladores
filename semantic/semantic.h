@@ -8,4 +8,5 @@
 extern int sem_error;
 
 Types analyze_semantic_program(Node *node, SymbolTable **scope, Types expected_return);
+
 #endif

@@ -1,6 +1,5 @@
 #ifndef TYPES_H
 #define TYPES_H
-
 #include "../symbol_table/structure.h"
 
 /* Tipos de dado possíveis*/

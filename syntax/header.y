@@ -7,17 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Flex global functions and variables
+// Definições de variáveis globais.
 extern int yylineno;
-extern char *yytext;
 extern FILE *yyin;
-extern int yydebug;
 
-// Lexical analyzer function declaration
+// Declaração da função do analisador léxico
 int yylex();
 
-// Error handling function declaration
+// Declaração da função de tratamento de erros
 void yyerror(const char *s);
+
+// Variáveis de manipulação da ast, da tabela de símbolos e de erro semântico.
 Node* root = NULL;
 int semantic_error = 0;
 SymbolTable *global=NULL;
@@ -93,7 +93,7 @@ DeclFuncVar:
         int num_params = 0;
         DataType *param_types = NULL;
 
-        // Count params and to save types.
+        // Contar parâmetros e salvar tipos.
         if (params_node && params_node->data.nnary.first) {
             Node *p = params_node->data.nnary.first;
             while (p) { num_params++; p = p->next; }
@@ -204,7 +204,7 @@ ListaDeclVar:
         nnary_add_child(decl, id);
         if (current) insert_variable(current,$2, ($1 == TYINT ? INT_TYPE : CAR_TYPE),local_escope_index++);
         
-        // If DeclVar has more ids of some type.
+        // Se DeclVar tiver mais IDs de algum tipo.
         if ($3 && $3->data.nnary.first) {
             Node *child = $3->data.nnary.first;
             while (child) {

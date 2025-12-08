@@ -5,11 +5,6 @@
 #include <string.h>
 #include "helpers.h"
 
-Types semantic_expression(Node *n, SymbolTable *scope)
-{
-    return analyze_semantic_program(n, &scope, TYVOID);
-}
-
 /*Verifica se a tabela de símbolos foi inicializada*/
 void helper_validation_null_table(SymbolTable *table)
 {
@@ -65,8 +60,8 @@ void helper_error_message(int line, const char *fmt, ...)
 /*Verifica se ambos os operandos de uma expressão binária são inteiros*/
 Types helper_check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
 {
-    Types left = semantic_expression(expr->data.binary.left, scope);
-    Types right = semantic_expression(expr->data.binary.right, scope);
+    Types left = analyze_semantic_program(expr->data.binary.left, &scope, TYVOID);
+    Types right = analyze_semantic_program(expr->data.binary.right, &scope, TYVOID);
 
     if (left != TYINT || right != TYINT)
     {
@@ -80,13 +75,14 @@ Types helper_check_binary_int(Node *expr, SymbolTable *scope, const char *msg)
     }
     return TYINT;
 }
+
 /*Verifica se ambos os operandos de uma expressão binária têm o mesmo tipo*/
 Types helper_check_binary_same(Node *expr, SymbolTable *scope, const char *msg)
 {
-    Types l = semantic_expression(expr->data.binary.left, scope);
-    Types r = semantic_expression(expr->data.binary.right, scope);
+    Types left = analyze_semantic_program(expr->data.binary.left, &scope, TYVOID);
+    Types right = analyze_semantic_program(expr->data.binary.right, &scope, TYVOID);
 
-    if (l != r)
+    if (left != right)
     {
         helper_error_message(expr->row, msg);
         sem_error = 1;
@@ -96,7 +92,7 @@ Types helper_check_binary_same(Node *expr, SymbolTable *scope, const char *msg)
 /*Verifica se a expressão é do tipo inteiro*/
 Types helper_type_is_int(Node *expr, SymbolTable *scope, const char *msg)
 {
-    Types type = semantic_expression(expr, scope);
+    Types type = analyze_semantic_program(expr, &scope, TYVOID);
     if (type != TYINT)
     {
         helper_error_message(expr->row, "%s", msg);
@@ -126,7 +122,7 @@ Types helper_analyze_atribuition(Node *atr, SymbolTable *scope)
         return TYVOID;
     }
 
-    Types right_type = semantic_expression(right, scope);
+    Types right_type = analyze_semantic_program(right, &scope, TYVOID);
     Types left_type = helper_convert_type(sym->type);
 
     if (right_type != left_type)
@@ -162,6 +158,7 @@ void helper_insert_global_variables(Node *node, SymbolTable **scope)
         decl = decl->next;
     }
 }
+
 /*Inserção de variaveis locais.*/
 void helper_insert_local_variables(Node *node, SymbolTable **scope)
 {
@@ -179,9 +176,7 @@ void helper_insert_local_variables(Node *node, SymbolTable **scope)
 
             if (table_search_name(*scope, name))
             {
-                helper_error_message(decl->row,
-                                     "Variavel '%s' foi redeclaracao de variavel no mesmo escopo, corrija seu codigo.",
-                                     name);
+                helper_error_message(decl->row, "Variavel '%s' foi redeclaracao de variavel no mesmo escopo, corrija seu codigo.", name);
             }
             else
             {
@@ -192,9 +187,7 @@ void helper_insert_local_variables(Node *node, SymbolTable **scope)
 
                 if (found && found->entry == PARAM_ENTRY)
                 {
-                    helper_error_message(decl->row,
-                                         "Varivel tem o mesmo nome do parametro:'%s' .",
-                                         name);
+                    helper_error_message(decl->row, "Varivel tem o mesmo nome do parametro:'%s' .", name);
                 }
                 else
                 {

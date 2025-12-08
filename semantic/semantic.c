@@ -21,7 +21,7 @@ Types analyze_semantic_program(Node *ast, SymbolTable **scope, Types expected_re
 
     switch (ast->species)
     {
-    case NOCAR_CONST: // retorna o tipo caractere para constantes de caractere
+    case NOCAR_CONST: // retorna constantes de caractere
         return TYCAR;
 
     case NOWRITE: // comando 'escreva' apenas avalia a expressão e não retorna tipo relevante
@@ -29,10 +29,10 @@ Types analyze_semantic_program(Node *ast, SymbolTable **scope, Types expected_re
         return TYVOID;
 
     case NOAND:
-    case NOOR: // operadores lógicos aceitam apenas inteiros (0 ou 1)
+    case NOOR: // operadores lógicos aceitam apenas inteiros
         return helper_check_binary_int(ast, *scope, "Operacoes logicas exigem inteiros.");
 
-    case NODECL_VAR: // declaração de variável insere no escopo correto (global/local)
+    case NODECL_VAR: // declaração de variável
         if (*scope == aux_global_scope)
             helper_insert_global_variables(ast, scope);
         else

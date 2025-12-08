@@ -426,11 +426,13 @@ int main(int argc, char **argv) {
     fclose(yyin);
     analyze_semantic_program(root, &global, TYVOID);
 
+
     if (semantic_error) {
         if (root) {
             free_ast(root);
             root = NULL;
         }
+     destroy_symbol_table(global);
         return 1;
     }
 
@@ -440,5 +442,6 @@ int main(int argc, char **argv) {
     }
 
     printf("Sucesso: análise concluída com sucesso, livre de erros semanticos e de erros sintaticos.\n");
+    destroy_symbol_table(global);
     return 0;
 }

@@ -57,7 +57,7 @@ typedef struct LeafInfo
 {
     char *lexeme;
     int int_val;
-    char char_val;
+    char car_val;
 } LeafInfo;
 
 typedef struct Node Node;

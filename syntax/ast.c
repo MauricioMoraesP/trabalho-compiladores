@@ -23,7 +23,7 @@ Node *create_leaf_node(NSpecies s, int row, Types type, const char *lexeme, int 
 
     n->data.leaf.lexeme = lexeme ? strdup(lexeme) : NULL;
     n->data.leaf.int_val = int_val;
-    n->data.leaf.char_val = car_val;
+    n->data.leaf.car_val = car_val;
 
     return n;
 }

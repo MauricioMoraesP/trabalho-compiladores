@@ -89,6 +89,7 @@ Types helper_check_binary_same(Node *expr, SymbolTable *scope, const char *msg)
     }
     return TYINT;
 }
+
 /*Verifica se a expressão é do tipo inteiro*/
 Types helper_type_is_int(Node *expr, SymbolTable *scope, const char *msg)
 {
@@ -135,19 +136,19 @@ Types helper_analyze_atribuition(Node *atr, SymbolTable *scope)
 }
 
 /*Inserção de variaveis globais.*/
-void helper_insert_global_variables(Node *node, SymbolTable **scope)
+void helper_insert_global_variables(Node *ctx, SymbolTable **scope)
 {
-    if (!node || !scope)
+    if (!ctx || !scope)
         return;
 
-    Node *decl = node->data.nnary.first;
+    Node *decl = ctx->data.nnary.first;
 
     while (decl)
     {
         if (decl->species == NOIDENTIFICADOR)
         {
             char *name = decl->data.leaf.lexeme;
-            Types tdecl = node->type;
+            Types tdecl = ctx->type;
 
             if (!table_search_name(*scope, name))
             {
@@ -160,19 +161,19 @@ void helper_insert_global_variables(Node *node, SymbolTable **scope)
 }
 
 /*Inserção de variaveis locais.*/
-void helper_insert_local_variables(Node *node, SymbolTable **scope)
+void helper_insert_local_variables(Node *ctx, SymbolTable **scope)
 {
-    if (!node || !scope)
+    if (!ctx || !scope)
         return;
 
-    Node *decl = node->data.nnary.first;
+    Node *decl = ctx->data.nnary.first;
 
     while (decl)
     {
         if (decl->species == NOIDENTIFICADOR)
         {
             char *name = decl->data.leaf.lexeme;
-            Types tdecl = node->type;
+            Types tdecl = ctx->type;
 
             if (table_search_name(*scope, name))
             {

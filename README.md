@@ -1,6 +1,6 @@
 # Instruções.
 
-Este projeto implementa um compilador didático para a linguagem Goianinha. O trabalho abrange a criação da Tabela de Símbolos, do Analisador Léxico, o Analisador Sintático e o Analisador Semântico.
+Este projeto implementa um compilador didático para a linguagem Goianinha. O trabalho abrange a criação da Tabela de Símbolos, criação do Analisador Léxico, criação do Analisador Sintático e criação do Analisador Semântico.
 
 
 
@@ -23,7 +23,7 @@ Este projeto implementa um compilador didático para a linguagem Goianinha. O tr
 /tests - Possui os testes do analisador semântico e do léxico dado pelo professor.
 
 
-### Compilando o código e todos exemplos de teste
+### Compilando o código e rodando todos exemplos de teste
 
 No prompt:
 ```
